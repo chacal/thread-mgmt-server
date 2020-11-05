@@ -8,3 +8,5 @@ require (
 	github.com/plgd-dev/go-coap/v2 v2.1.0
 	github.com/sirupsen/logrus v1.4.2
 )
+
+replace github.com/plgd-dev/go-coap/v2 v2.1.0 => github.com/chacal/go-coap/v2 v2.1.2-0.20201106113013-5953692068dc
