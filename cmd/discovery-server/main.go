@@ -62,7 +62,7 @@ func createServerConn(opts Options) (*net.UDPConn, error) {
 
 func loggingMiddleware(next mux.Handler) mux.Handler {
 	return mux.HandlerFunc(func(w mux.ResponseWriter, r *mux.Message) {
-		log.Infof("Client %v, %v\n", w.Client().RemoteAddr(), r.String())
+		log.Infof("Client %v, %v", w.Client().RemoteAddr(), r.String())
 		next.ServeCOAP(w, r)
 	})
 }
@@ -70,6 +70,9 @@ func loggingMiddleware(next mux.Handler) mux.Handler {
 func handleDiscovery(mgmtServerAddress string) mux.Handler {
 	return mux.HandlerFunc(func(w mux.ResponseWriter, r *mux.Message) {
 		payload := fmt.Sprintf(`{"mgmtServer": "%v"}`, mgmtServerAddress)
+		log.Infof("Got discovery request from %v. Responding with management server address '%v'.",
+			w.Client().RemoteAddr(), mgmtServerAddress,
+		)
 		w.SetResponse(codes.Content, message.AppJSON, strings.NewReader(payload))
 	})
 }
