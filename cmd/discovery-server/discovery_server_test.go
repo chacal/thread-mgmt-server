@@ -15,14 +15,14 @@ import (
 	"time"
 )
 
-var testOpts = Options{"en0", "[ff03::1]", 9999, "test.mgmt"}
-var expectedResp = fmt.Sprintf("{\"mgmtServer\": \"%v\"}", testOpts.MgmtServerAddress)
-
 func TestDiscovery(t *testing.T) {
 	log.SetLevel(log.WarnLevel)
-	done := make(chan int)
 
-	go startServer(t, done)
+	testOpts := createTestOpts(t)
+	var expectedResp = fmt.Sprintf("{\"mgmtServer\": \"%v\"}", testOpts.MgmtServerAddress)
+
+	done := make(chan int)
+	go startServer(t, testOpts, done)
 
 	go func() {
 		url := fmt.Sprint(testOpts.ListenAddr, ":", testOpts.Port)
@@ -37,9 +37,9 @@ func TestDiscovery(t *testing.T) {
 	<-done
 }
 
-func startServer(t *testing.T, done chan int) {
+func startServer(t *testing.T, opts Options, done chan int) {
 	defer close(done)
-	err := startCoapServer(testOpts)
+	err := startCoapServer(opts)
 	require.NoError(t, err)
 }
 
@@ -61,4 +61,10 @@ func startDiscoveryClient(t *testing.T, url string, path string, responseHandler
 
 	err = server.Discover(ctx, url, path, responseHandler)
 	require.NoError(t, err)
+}
+
+func createTestOpts(t *testing.T) Options {
+	loopback, err := findLoopbackInterface()
+	require.NoError(t, err)
+	return Options{loopback.Name, "[ff03::1]", 9999, "test.mgmt"}
 }
