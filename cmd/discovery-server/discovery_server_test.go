@@ -34,7 +34,11 @@ func TestDiscovery(t *testing.T) {
 		})
 	}()
 
-	<-done
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		assert.Fail(t, "Timeout while waiting for responses")
+	}
 }
 
 func startServer(t *testing.T, opts Options, done chan int) {
