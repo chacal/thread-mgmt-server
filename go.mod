@@ -7,6 +7,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/plgd-dev/go-coap/v2 v2.1.0
 	github.com/sirupsen/logrus v1.4.2
+	github.com/stretchr/testify v1.5.1
 )
 
 replace github.com/plgd-dev/go-coap/v2 v2.1.0 => github.com/chacal/go-coap/v2 v2.1.2-0.20201106113013-5953692068dc
