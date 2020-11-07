@@ -23,7 +23,8 @@ type Options struct {
 }
 
 func main() {
-	opts := ParseOptions()
+	opts := Options{}
+	server.ParseOptions(opts)
 	LogOptions(opts)
 	err := startCoapServer(opts)
 	log.Fatalf("%+v", err)
