@@ -1,18 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"github.com/chacal/thread-mgmt-server/pkg/coap-utils"
+	"github.com/chacal/thread-mgmt-server/pkg/server"
 	"github.com/pkg/errors"
-	"github.com/plgd-dev/go-coap/v2/message"
-	"github.com/plgd-dev/go-coap/v2/message/codes"
 	"github.com/plgd-dev/go-coap/v2/mux"
 	"github.com/plgd-dev/go-coap/v2/net"
 	"github.com/plgd-dev/go-coap/v2/udp"
 	log "github.com/sirupsen/logrus"
 	gonet "net"
 	"strconv"
-	"strings"
 )
 
 type Options struct {
@@ -20,6 +17,10 @@ type Options struct {
 	ListenAddr        string `short:"l" long:"listen" description:"Multicast address to listen" default:"[ff03::1]" env:"LISTEN_ADDRESS"`
 	Port              int    `short:"p" long:"port" description:"Port to listen" default:"5683" env:"PORT"`
 	MgmtServerAddress string `short:"m" long:"mgmt-server" description:"Address of the returned management server" env:"MGMT_SERVER_ADDRESS" required:"yes"`
+}
+
+type DiscoveryResponse struct {
+	MgmtServer string `json:"mgmtServer,omitempty"`
 }
 
 func main() {
@@ -64,11 +65,10 @@ func createServerConn(opts Options) (*net.UDPConn, error) {
 
 func handleGetDiscover(mgmtServerAddress string) mux.Handler {
 	return mux.HandlerFunc(func(w mux.ResponseWriter, r *mux.Message) {
-		payload := fmt.Sprintf(`{"mgmtServer": "%v"}`, mgmtServerAddress)
 		log.Infof("Got discovery request from %v. Responding with management server address '%v'.",
 			w.Client().RemoteAddr(), mgmtServerAddress,
 		)
-		w.SetResponse(codes.Content, message.AppJSON, strings.NewReader(payload))
+		coap_utils.RespondWithJSON(w, DiscoveryResponse{mgmtServerAddress})
 	})
 }
 

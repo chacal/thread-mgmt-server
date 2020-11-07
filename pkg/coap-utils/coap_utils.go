@@ -17,3 +17,21 @@ func LoggingMiddleware(next mux.Handler) mux.Handler {
 		next.ServeCOAP(w, r)
 	})
 }
+
+func RespondWithJSON(w mux.ResponseWriter, body interface{}) {
+	payload, err := json.Marshal(body)
+	if err != nil {
+		RespondWithInternalServerError(w, errors.Wrapf(err, "error marshalling payload %v", string(payload)))
+		return
+	}
+
+	err = w.SetResponse(codes.Content, message.AppJSON, bytes.NewReader(payload))
+	if err != nil {
+		RespondWithInternalServerError(w, errors.WithStack(err))
+	}
+}
+
+func RespondWithInternalServerError(w mux.ResponseWriter, e error) {
+	log.Errorf("%+v", e)
+	w.SetResponse(codes.InternalServerError, message.TextPlain, nil)
+}
