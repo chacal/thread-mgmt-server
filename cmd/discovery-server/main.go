@@ -38,8 +38,8 @@ func startCoapServer(opts Options) error {
 	defer conn.Close()
 
 	router := mux.NewRouter()
-	router.Handle("/discover", handleDiscovery(opts.MgmtServerAddress))
 	router.Use(coap_utils.LoggingMiddleware)
+	router.Handle("/discover", handleGetDiscover(opts.MgmtServerAddress))
 
 	server := udp.NewServer(udp.WithMux(router), udp.WithKeepAlive(nil))
 	defer server.Stop()
@@ -62,7 +62,7 @@ func createServerConn(opts Options) (*net.UDPConn, error) {
 	return conn, nil
 }
 
-func handleDiscovery(mgmtServerAddress string) mux.Handler {
+func handleGetDiscover(mgmtServerAddress string) mux.Handler {
 	return mux.HandlerFunc(func(w mux.ResponseWriter, r *mux.Message) {
 		payload := fmt.Sprintf(`{"mgmtServer": "%v"}`, mgmtServerAddress)
 		log.Infof("Got discovery request from %v. Responding with management server address '%v'.",
