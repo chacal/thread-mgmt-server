@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/chacal/thread-mgmt-server/pkg/coap-utils"
+	"github.com/chacal/thread-mgmt-server/pkg/coap_utils"
 	"github.com/chacal/thread-mgmt-server/pkg/server"
 	"github.com/pkg/errors"
 	"github.com/plgd-dev/go-coap/v2/mux"

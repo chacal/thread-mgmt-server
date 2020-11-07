@@ -35,3 +35,17 @@ func RespondWithInternalServerError(w mux.ResponseWriter, e error) {
 	log.Errorf("%+v", e)
 	w.SetResponse(codes.InternalServerError, message.TextPlain, nil)
 }
+
+func GetLastPathPart(r *mux.Message) (string, error) {
+	path, err := r.Message.Options.Path()
+	if err != nil {
+		return "", errors.Wrapf(err, "couldn't get path from message: %+v", r)
+	}
+
+	parts := strings.Split(path, "/")
+	if len(parts) < 1 {
+		return "", errors.New("empty path")
+	}
+
+	return parts[len(parts)-1], nil
+}
