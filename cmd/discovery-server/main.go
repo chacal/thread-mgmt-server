@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/chacal/thread-mgmt-server/pkg/coap-utils"
 	"github.com/pkg/errors"
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
@@ -36,8 +37,8 @@ func startCoapServer(opts Options) error {
 	defer conn.Close()
 
 	router := mux.NewRouter()
-	router.Use(loggingMiddleware)
 	router.Handle("/discover", handleDiscovery(opts.MgmtServerAddress))
+	router.Use(coap_utils.LoggingMiddleware)
 
 	server := udp.NewServer(udp.WithMux(router), udp.WithKeepAlive(nil))
 	defer server.Stop()
@@ -58,13 +59,6 @@ func createServerConn(opts Options) (*net.UDPConn, error) {
 	}
 
 	return conn, nil
-}
-
-func loggingMiddleware(next mux.Handler) mux.Handler {
-	return mux.HandlerFunc(func(w mux.ResponseWriter, r *mux.Message) {
-		log.Infof("Client %v, %v", w.Client().RemoteAddr(), r.String())
-		next.ServeCOAP(w, r)
-	})
 }
 
 func handleDiscovery(mgmtServerAddress string) mux.Handler {
