@@ -25,7 +25,7 @@ type DiscoveryResponse struct {
 
 func main() {
 	opts := Options{}
-	server.ParseOptions(opts)
+	server.ParseOptions(&opts)
 	LogOptions(opts)
 	err := startCoapServer(opts)
 	log.Fatalf("%+v", err)
