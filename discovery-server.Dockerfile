@@ -13,22 +13,20 @@ COPY ./go.mod .
 COPY ./go.sum .
 RUN go mod download
 
+RUN mkdir bin
+
 # Copy the code into the container
 COPY cmd/ ./cmd
+COPY pkg/ ./pkg
 
 # Build the application
-RUN go build -o discovery-server ./cmd/discovery-server/*
+RUN go build -o bin ./...
 
-# Move to /dist directory as the place for resulting binary folder
-WORKDIR /dist
-
-# Copy binary from build to main folder
-RUN cp /build/discovery-server .
 
 # Build a small image
 FROM scratch
 
-COPY --from=builder /dist/discovery-server /
+COPY --from=builder /build/bin/discovery-server /
 
 # Command to run
 ENTRYPOINT ["/discovery-server"]
