@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestRegistry(t *testing.T) {
+func TestRegistry_GetOrCreate(t *testing.T) {
 	reg, err := Open(test.Tempfile())
 	require.NoError(t, err)
 	defer reg.Close()
@@ -16,11 +16,35 @@ func TestRegistry(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, Device{}, dev)
 
-	d := Device{"D100", 5000}
-	err = reg.Update("12345", d)
-	require.NoError(t, err)
+	d := update(t, reg, "12345", Device{"D100", 5000})
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
 	assert.Equal(t, d, dev)
+}
+
+func TestRegistry_GetAll(t *testing.T) {
+	reg, err := Open(test.Tempfile())
+	require.NoError(t, err)
+	defer reg.Close()
+
+	assert.Equal(t, []Device{}, getAll(t, reg))
+
+	d := update(t, reg, "12345", Device{"D100", 5000})
+	assert.Equal(t, []Device{d}, getAll(t, reg))
+
+	d2 := update(t, reg, "AABBCCDD", Device{"D100", 5000})
+	assert.Equal(t, []Device{d, d2}, getAll(t, reg))
+}
+
+func update(t *testing.T, reg *Registry, id string, d Device) Device {
+	err := reg.Update(id, d)
+	require.NoError(t, err)
+	return d
+}
+
+func getAll(t *testing.T, reg *Registry) []Device {
+	devices, err := reg.GetAll()
+	require.NoError(t, err)
+	return devices
 }

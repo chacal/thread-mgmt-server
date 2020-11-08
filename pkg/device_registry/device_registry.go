@@ -46,11 +46,12 @@ func (r *Registry) GetOrCreate(id string) (Device, error) {
 		if buf == nil {
 			return putDevice(tx, id, d)
 		} else {
-			err := json.Unmarshal(buf, &d)
+			dev, err := deviceFromJSON(buf)
 			if err != nil {
-				return errors.Wrapf(err, "failed to unmarshal device from db, data: %v", string(buf))
+				return err
 			}
-			log.Debugf("Device '%v' found: %+v", id, d)
+			log.Debugf("Device '%v' found: %+v", id, dev)
+			d = dev
 		}
 		return nil
 	})
@@ -62,6 +63,22 @@ func (r *Registry) Update(id string, dev Device) error {
 	return r.db.Update(func(tx *bolt.Tx) error {
 		return putDevice(tx, id, dev)
 	})
+}
+
+func (r *Registry) GetAll() ([]Device, error) {
+	devices := []Device{}
+	err := r.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Devices"))
+		return b.ForEach(func(k []byte, v []byte) error {
+			d, err := deviceFromJSON(v)
+			if err != nil {
+				return err
+			}
+			devices = append(devices, d)
+			return nil
+		})
+	})
+	return devices, err
 }
 
 func putDevice(tx *bolt.Tx, id string, dev Device) error {
@@ -79,4 +96,13 @@ func putDevice(tx *bolt.Tx, id string, dev Device) error {
 	}
 
 	return nil
+}
+
+func deviceFromJSON(buf []byte) (Device, error) {
+	d := Device{}
+	err := json.Unmarshal(buf, &d)
+	if err != nil {
+		return d, errors.Wrapf(err, "failed to unmarshal device from db, data: %v", string(buf))
+	}
+	return d, nil
 }
