@@ -1,4 +1,4 @@
-package mgmt_routes
+package coap
 
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/coap_utils"

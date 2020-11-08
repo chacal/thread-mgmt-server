@@ -7,8 +7,8 @@ import (
 )
 
 type Options struct {
-	Port   int    `short:"p" long:"port" description:"Port to listen" default:"5683" env:"PORT"`
-	DbFile string `short:"f" long:"file" description:"Database file for device registry" default:"devices.db" env:"FILE"`
+	CoapPort int    `short:"c" long:"coap_port" description:"CoAP port to listen" default:"5683" env:"COAP_PORT"`
+	DbFile   string `short:"f" long:"file" description:"Database file for device registry" default:"devices.db" env:"DB_FILE"`
 }
 
 func main() {
@@ -22,17 +22,17 @@ func main() {
 	}
 	defer reg.Close()
 
-	srv, err := NewServer(opts, reg)
+	coapServer, err := NewCoapServer(opts, reg)
 	if err != nil {
-		log.Fatalf("failed to open create server: %+v", err)
+		log.Fatalf("failed to create CoAP server: %+v", err)
 	}
-	defer srv.Stop()
-	log.Fatalf("%+v", srv.Serve())
+	defer coapServer.Stop()
+	log.Fatalf("%+v", coapServer.Serve())
 }
 
 func logOptions(opts Options) {
 	format := "Using configuration:\n" +
 		"--------------------\n" +
-		"Listen port:\t%v\n"
-	log.Infof(format, opts.Port)
+		"CoAP listen port:\t%v\n"
+	log.Infof(format, opts.CoapPort)
 }
