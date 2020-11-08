@@ -2,14 +2,8 @@ package main
 
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
-	"github.com/chacal/thread-mgmt-server/pkg/mgmt_routes"
 	"github.com/chacal/thread-mgmt-server/pkg/server"
-	"github.com/pkg/errors"
-	"github.com/plgd-dev/go-coap/v2/mux"
-	"github.com/plgd-dev/go-coap/v2/net"
-	"github.com/plgd-dev/go-coap/v2/udp"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 type Options struct {
@@ -28,23 +22,12 @@ func main() {
 	}
 	defer reg.Close()
 
-	err = startCoapServer(opts, reg)
-	log.Fatalf("%+v", err)
-}
-
-func startCoapServer(opts Options, reg *device_registry.Registry) error {
-	conn, err := net.NewListenUDP("udp6", ":"+strconv.Itoa(opts.Port))
+	srv, err := NewServer(opts, reg)
 	if err != nil {
-		return errors.WithStack(err)
+		log.Fatalf("failed to open create server: %+v", err)
 	}
-	defer conn.Close()
-
-	router := mux.NewRouter()
-	mgmt_routes.RegisterRoutes(router, reg)
-
-	srv := udp.NewServer(udp.WithMux(router), udp.WithKeepAlive(nil))
 	defer srv.Stop()
-	return srv.Serve(conn)
+	log.Fatalf("%+v", srv.Serve())
 }
 
 func logOptions(opts Options) {

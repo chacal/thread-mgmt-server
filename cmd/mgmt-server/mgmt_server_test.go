@@ -19,19 +19,24 @@ func TestV1Config(t *testing.T) {
 	require.NoError(t, err)
 	defer reg.Close()
 
-	done := make(chan int)
+	srv, err := NewServer(Options{5683, dbFile}, reg)
+	require.NoError(t, err)
+	defer srv.Stop()
+
+	testDone := make(chan int, 2)
 
 	go func() {
-		err := startCoapServer(Options{5683, dbFile}, reg)
-		require.NoError(t, err)
+		err := srv.Serve()
+		assert.NoError(t, err)
+		testDone <- 1
 	}()
 
 	go func() {
 		assert.JSONEq(t, `{}`, getJSON(t, "/v1/config/12345"))
-		done <- 1
+		testDone <- 1
 	}()
 
-	<-done
+	<-testDone
 }
 
 func TestGetLastPathPart(t *testing.T) {
@@ -47,7 +52,7 @@ func getJSON(t *testing.T, path string) string {
 	defer cancel()
 
 	res, err := coap_utils.GetJSON(ctx, "localhost:5683", path)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	return res
 }
