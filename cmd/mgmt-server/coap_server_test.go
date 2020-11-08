@@ -19,7 +19,7 @@ func TestV1Config(t *testing.T) {
 	require.NoError(t, err)
 	defer reg.Close()
 
-	srv, err := NewCoapServer(Options{5683, dbFile}, reg)
+	srv, err := NewCoapServer(Options{5683, 8080, dbFile}, reg)
 	require.NoError(t, err)
 	defer srv.Stop()
 

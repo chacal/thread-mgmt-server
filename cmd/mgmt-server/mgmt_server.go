@@ -3,10 +3,13 @@ package main
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	coap_routes "github.com/chacal/thread-mgmt-server/pkg/mgmt_routes/coap"
+	http_routes "github.com/chacal/thread-mgmt-server/pkg/mgmt_routes/http"
+	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/plgd-dev/go-coap/v2/mux"
 	"github.com/plgd-dev/go-coap/v2/net"
 	"github.com/plgd-dev/go-coap/v2/udp"
+	"net/http"
 	"strconv"
 )
 
@@ -36,4 +39,14 @@ func (s *MgmtCoapServer) Serve() error {
 func (s *MgmtCoapServer) Stop() {
 	s.srv.Stop()
 	s.conn.Close()
+}
+
+func NewHttpServer(opts Options, reg *device_registry.Registry) *http.Server {
+	router := gin.Default()
+	http_routes.RegisterRoutes(router, reg)
+
+	return &http.Server{
+		Addr:    ":" + strconv.Itoa(opts.HttpPort),
+		Handler: router,
+	}
 }
