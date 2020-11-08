@@ -28,13 +28,14 @@ func TestRegistry_GetAll(t *testing.T) {
 	require.NoError(t, err)
 	defer reg.Close()
 
-	assert.Equal(t, []Device{}, getAll(t, reg))
+	expected := map[string]Device{}
+	assert.Equal(t, expected, getAll(t, reg))
 
-	d := update(t, reg, "12345", Device{"D100", 5000})
-	assert.Equal(t, []Device{d}, getAll(t, reg))
+	expected["12345"] = update(t, reg, "12345", Device{"D100", 5000})
+	assert.Equal(t, expected, getAll(t, reg))
 
-	d2 := update(t, reg, "AABBCCDD", Device{"D100", 5000})
-	assert.Equal(t, []Device{d, d2}, getAll(t, reg))
+	expected["AABBCCDD"] = update(t, reg, "AABBCCDD", Device{"D100", 5000})
+	assert.Equal(t, expected, getAll(t, reg))
 }
 
 func update(t *testing.T, reg *Registry, id string, d Device) Device {
@@ -43,7 +44,7 @@ func update(t *testing.T, reg *Registry, id string, d Device) Device {
 	return d
 }
 
-func getAll(t *testing.T, reg *Registry) []Device {
+func getAll(t *testing.T, reg *Registry) map[string]Device {
 	devices, err := reg.GetAll()
 	require.NoError(t, err)
 	return devices

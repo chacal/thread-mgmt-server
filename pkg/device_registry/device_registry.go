@@ -65,8 +65,8 @@ func (r *Registry) Update(id string, dev Device) error {
 	})
 }
 
-func (r *Registry) GetAll() ([]Device, error) {
-	devices := []Device{}
+func (r *Registry) GetAll() (map[string]Device, error) {
+	devices := make(map[string]Device)
 	err := r.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("Devices"))
 		return b.ForEach(func(k []byte, v []byte) error {
@@ -74,7 +74,7 @@ func (r *Registry) GetAll() ([]Device, error) {
 			if err != nil {
 				return err
 			}
-			devices = append(devices, d)
+			devices[string(k)] = d
 			return nil
 		})
 	})
