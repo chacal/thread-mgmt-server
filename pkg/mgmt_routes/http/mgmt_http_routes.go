@@ -12,6 +12,7 @@ func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry) {
 	router.Use(errorHandlingMiddleware)
 	router.GET("/v1/devices", handlerWithReg(reg, getV1Devices))
 	router.POST("/v1/devices/:device_id", handlerWithReg(reg, postV1Devices))
+	router.DELETE("/v1/devices/:device_id", handlerWithReg(reg, deleteV1Devices))
 }
 
 type Id struct {
@@ -41,6 +42,22 @@ func postV1Devices(reg *device_registry.Registry, ctx *gin.Context) {
 	}
 
 	err := reg.Update(id.Id, dev)
+	if err != nil {
+		ctx.Error(errors.WithStack(err))
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
+func deleteV1Devices(reg *device_registry.Registry, ctx *gin.Context) {
+	var id Id
+	if err := ctx.ShouldBindUri(&id); err != nil {
+		ctx.Error(errors.WithStack(err))
+		return
+	}
+
+	err := reg.Delete(id.Id)
 	if err != nil {
 		ctx.Error(errors.WithStack(err))
 		return

@@ -31,6 +31,19 @@ func TestV1PostDevice(t *testing.T) {
 	assert.Equal(t, device_registry.Device{"D100", 5000}, dev)
 }
 
+func TestV1DeleteDevice(t *testing.T) {
+	router, reg := setup(t)
+
+	err := reg.Update("12345", device_registry.Device{"D100", 5000})
+	require.NoError(t, err)
+
+	T.AssertOK(t, T.RecordDelete(router, "/v1/devices/12345"))
+
+	dev, err := reg.GetOrCreate("12345")
+	require.NoError(t, err)
+	assert.Equal(t, device_registry.Device{}, dev)  // Should return empty device
+}
+
 func setup(t *testing.T) (*gin.Engine, *device_registry.Registry) {
 	reg := device_registry.CreateTestRegistry(t)
 

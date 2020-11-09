@@ -23,6 +23,10 @@ func RecordPost(router *gin.Engine, path string, payload string) *httptest.Respo
 	return recordReq(router, path, "POST", payload)
 }
 
+func RecordDelete(router *gin.Engine, path string) *httptest.ResponseRecorder {
+	return recordReq(router, path, "DELETE", "")
+}
+
 func RecordGet(router *gin.Engine, path string) *httptest.ResponseRecorder {
 	return recordReq(router, path, "GET", "")
 }
