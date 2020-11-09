@@ -5,6 +5,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 type Device struct {
@@ -17,7 +18,7 @@ type Registry struct {
 }
 
 func Open(dbFileName string) (*Registry, error) {
-	db, err := bolt.Open(dbFileName, 0600, nil)
+	db, err := bolt.Open(dbFileName, 0600, &bolt.Options{Timeout: 3 * time.Second})
 	if err != nil {
 		return nil, errors.Wrapf(err, "error opening database file '%v'", dbFileName)
 	}
