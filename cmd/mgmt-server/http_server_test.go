@@ -3,17 +3,15 @@ package main
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	http_routes "github.com/chacal/thread-mgmt-server/pkg/mgmt_routes/http"
-	"github.com/chacal/thread-mgmt-server/pkg/test"
+	T "github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
-func TestV1Devices(t *testing.T) {
-	dbFile := test.Tempfile()
+func TestV1GetDevices(t *testing.T) {
+	dbFile := T.Tempfile()
 	reg, err := device_registry.Open(dbFile)
 	require.NoError(t, err)
 	defer reg.Close()
@@ -21,23 +19,26 @@ func TestV1Devices(t *testing.T) {
 	router := gin.Default()
 	http_routes.RegisterRoutes(router, reg)
 
-	assertOKJson(t, `{}`, recordGet(router, "/v1/devices"))
+	T.AssertOKJson(t, `{}`, T.RecordGet(router, "/v1/devices"))
 
 	err = reg.Update("12345", device_registry.Device{"D100", 5000})
 	require.NoError(t, err)
 
-	assertOKJson(t, `{"12345": {"name": "D100", "pollTime": 5000}}`, recordGet(router, "/v1/devices"))
+	T.AssertOKJson(t, `{"12345": {"name": "D100", "pollTime": 5000}}`, T.RecordGet(router, "/v1/devices"))
 }
 
-func assertOKJson(t *testing.T, expected string, w *httptest.ResponseRecorder) {
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.Equal(t, "application/json; charset=utf-8", w.Header().Get("Content-Type"))
-	assert.JSONEq(t, expected, w.Body.String())
-}
+func TestV1PostDevice(t *testing.T) {
+	dbFile := T.Tempfile()
+	reg, err := device_registry.Open(dbFile)
+	require.NoError(t, err)
+	defer reg.Close()
 
-func recordGet(router *gin.Engine, path string) *httptest.ResponseRecorder {
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", path, nil)
-	router.ServeHTTP(w, req)
-	return w
+	router := gin.Default()
+	http_routes.RegisterRoutes(router, reg)
+
+	T.AssertOK(t, T.RecordPost(router, "/v1/devices/12345", `{"id": "12345", "name": "D100", "pollTime": 5000}`))
+
+	dev, err := reg.GetOrCreate("12345")
+	require.NoError(t, err)
+	assert.Equal(t, device_registry.Device{"D100", 5000}, dev)
 }

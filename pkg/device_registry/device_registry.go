@@ -8,8 +8,8 @@ import (
 )
 
 type Device struct {
-	Name     string `json:"name,omitempty"`
-	PollTime int    `json:"pollTime,omitempty"`
+	Name     string `json:"name,omitempty" binding:"required"`
+	PollTime int    `json:"pollTime,omitempty" binding:"required"`
 }
 
 type Registry struct {
@@ -92,7 +92,7 @@ func putDevice(tx *bolt.Tx, id string, dev Device) error {
 
 	err = b.Put([]byte(id), buf)
 	if err != nil {
-		return errors.Wrapf(err, "failed to put: %v", dev)
+		return errors.Wrapf(err, "failed to put: %+v", dev)
 	}
 
 	return nil
