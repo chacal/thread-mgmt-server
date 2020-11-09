@@ -8,7 +8,6 @@ import (
 	"github.com/plgd-dev/go-coap/v2/udp"
 	"github.com/plgd-dev/go-coap/v2/udp/client"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -16,8 +15,6 @@ import (
 )
 
 func TestDiscovery(t *testing.T) {
-	log.SetLevel(log.WarnLevel)
-
 	testOpts := createTestOpts(t)
 	var expectedResp = fmt.Sprintf("{\"mgmtServer\": \"%v\"}", testOpts.MgmtServerAddress)
 
