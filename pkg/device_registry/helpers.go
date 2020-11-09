@@ -2,8 +2,11 @@ package device_registry
 
 import (
 	"github.com/boltdb/bolt"
+	"github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func initializeDevicesBucket(db *bolt.DB) error {
@@ -15,4 +18,13 @@ func initializeDevicesBucket(db *bolt.DB) error {
 		log.Info("Initialized bucket Devices")
 		return nil
 	})
+}
+
+func CreateTestRegistry(t *testing.T) *Registry {
+	reg, err := Open(test.Tempfile())
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		reg.Close()
+	})
+	return reg
 }

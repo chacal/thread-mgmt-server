@@ -39,7 +39,7 @@ func main() {
 }
 
 func startCoapServer(opts Options, reg *device_registry.Registry, serverExit chan int) {
-	coapServer, err := NewCoapServer(opts, reg)
+	coapServer, err := NewCoapServer(opts.CoapPort, reg)
 	if err != nil {
 		log.Fatalf("failed to create CoAP server: %+v", err)
 	}

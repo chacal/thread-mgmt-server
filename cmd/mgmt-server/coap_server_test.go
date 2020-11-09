@@ -4,22 +4,21 @@ import (
 	"context"
 	"github.com/chacal/thread-mgmt-server/pkg/coap_utils"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
-	"github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/plgd-dev/go-coap/v2/mux"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"strconv"
 	"testing"
 	"time"
 )
 
-func TestV1Config(t *testing.T) {
-	dbFile := test.Tempfile()
-	reg, err := device_registry.Open(dbFile)
-	require.NoError(t, err)
-	defer reg.Close()
+const TEST_COAP_PORT = 55683
 
-	srv, err := NewCoapServer(Options{5683, 8080, dbFile}, reg)
+func TestV1Config(t *testing.T) {
+	reg := device_registry.CreateTestRegistry(t)
+
+	srv, err := NewCoapServer(TEST_COAP_PORT, reg)
 	require.NoError(t, err)
 	defer srv.Stop()
 
@@ -54,7 +53,7 @@ func getJSON(t *testing.T, path string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	res, err := coap_utils.GetJSON(ctx, "localhost:5683", path)
+	res, err := coap_utils.GetJSON(ctx, "localhost:"+strconv.Itoa(TEST_COAP_PORT), path)
 	assert.NoError(t, err)
 
 	return res

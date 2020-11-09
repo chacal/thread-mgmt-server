@@ -18,8 +18,8 @@ type MgmtCoapServer struct {
 	srv  *udp.Server
 }
 
-func NewCoapServer(opts Options, reg *device_registry.Registry) (*MgmtCoapServer, error) {
-	conn, err := net.NewListenUDP("udp6", ":"+strconv.Itoa(opts.CoapPort))
+func NewCoapServer(coapPort int, reg *device_registry.Registry) (*MgmtCoapServer, error) {
+	conn, err := net.NewListenUDP("udp6", ":"+strconv.Itoa(coapPort))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
