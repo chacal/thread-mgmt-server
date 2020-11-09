@@ -82,6 +82,18 @@ func (r *Registry) GetAll() (map[string]Device, error) {
 	return devices, err
 }
 
+func (r *Registry) Delete(id string) error {
+	return r.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Devices"))
+		log.Debugf("Deleting device '%v'", id)
+		err := b.Delete([]byte(id))
+		if err != nil {
+			return errors.Wrapf(err, "failed to delete device, id: '%v'", id)
+		}
+		return nil
+	})
+}
+
 func putDevice(tx *bolt.Tx, id string, dev Device) error {
 	b := tx.Bucket([]byte("Devices"))
 

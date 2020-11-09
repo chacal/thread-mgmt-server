@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestRegistry_GetOrCreate(t *testing.T) {
+func TestRegistry_CRUD(t *testing.T) {
 	reg := CreateTestRegistry(t)
 
 	dev, err := reg.GetOrCreate("12345")
@@ -18,6 +18,13 @@ func TestRegistry_GetOrCreate(t *testing.T) {
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
 	assert.Equal(t, d, dev)
+
+	err = reg.Delete("12345")
+	require.NoError(t, err)
+
+	dev, err = reg.GetOrCreate("12345")
+	require.NoError(t, err)
+	assert.Equal(t, Device{}, dev)  // Should create new empty Device here
 }
 
 func TestRegistry_GetAll(t *testing.T) {
