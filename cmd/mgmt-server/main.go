@@ -52,7 +52,10 @@ func startCoapServer(opts Options, reg *device_registry.Registry, serverExit cha
 }
 
 func startHttpServer(opts Options, reg *device_registry.Registry, err error, serverExit chan int) {
-	httpServer := NewHttpServer(opts, reg)
+	httpServer, err := NewHttpServer(opts, reg)
+	if err != nil {
+		log.Fatalf("failed to create HTTP server: %+v", err)
+	}
 	defer httpServer.Shutdown(context.Background())
 
 	err = httpServer.ListenAndServe()

@@ -49,12 +49,15 @@ func (s *MgmtCoapServer) Stop() {
 	s.conn.Close()
 }
 
-func NewHttpServer(opts Options, reg *device_registry.Registry) *http.Server {
+func NewHttpServer(opts Options, reg *device_registry.Registry) (*http.Server, error) {
 	router := gin.Default()
-	http_routes.RegisterRoutes(router, reg)
+	err := http_routes.RegisterRoutes(router, reg)
+	if err != nil {
+		return nil, err
+	}
 
 	return &http.Server{
 		Addr:    ":" + strconv.Itoa(opts.HttpPort),
 		Handler: router,
-	}
+	}, nil
 }

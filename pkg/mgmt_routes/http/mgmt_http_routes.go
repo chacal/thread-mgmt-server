@@ -6,13 +6,17 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
-func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry) {
+func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry) error {
 	router.Use(errorHandlingMiddleware)
 	router.GET("/v1/devices", handlerWithReg(reg, getV1Devices))
 	router.POST("/v1/devices/:device_id", handlerWithReg(reg, postV1Devices))
 	router.DELETE("/v1/devices/:device_id", handlerWithReg(reg, deleteV1Devices))
+	return serveStaticFromDir(router, "dist")
 }
 
 type Id struct {
@@ -80,4 +84,31 @@ func errorHandlingMiddleware(ctx *gin.Context) {
 		}
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	}
+}
+
+func serveStaticFromDir(router *gin.Engine, dir string) error {
+	files, err := getFilenamesInDir(dir)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		router.StaticFile(strings.TrimPrefix(f, dir), f)
+	}
+
+	// Manually add index.html
+	router.StaticFile("/", dir + "/index.html")
+
+	return nil
+}
+
+func getFilenamesInDir(root string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if info != nil && !info.IsDir() {
+			files = append(files, path)
+		}
+		return nil
+	})
+	return files, errors.WithStack(err)
 }
