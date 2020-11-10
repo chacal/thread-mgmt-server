@@ -9,10 +9,10 @@ import (
 
 func RegisterRoutes(router *mux.Router, reg *device_registry.Registry) {
 	router.Use(coap_utils.LoggingMiddleware)
-	router.Handle("/v1/config/", handlerWithReg(reg, getV1Config))
+	router.Handle("v1/devices/", handlerWithReg(reg, getV1Device))
 }
 
-func getV1Config(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message) {
+func getV1Device(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message) {
 	deviceId, err := coap_utils.GetLastPathPart(r)
 	if err != nil {
 		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))

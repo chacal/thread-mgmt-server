@@ -15,7 +15,7 @@ import (
 
 const TEST_COAP_PORT = 55683
 
-func TestV1Config(t *testing.T) {
+func TestGetV1Device(t *testing.T) {
 	reg := device_registry.CreateTestRegistry(t)
 
 	srv, err := NewCoapServer(TEST_COAP_PORT, reg)
@@ -31,10 +31,10 @@ func TestV1Config(t *testing.T) {
 	}()
 
 	go func() {
-		assert.JSONEq(t, `{}`, getJSON(t, "/v1/config/12345"))
+		assert.JSONEq(t, `{}`, getJSON(t, "/v1/devices/12345"))
 		err = reg.Update("12345", device_registry.Device{"D100", 5000})
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"name":"D100", "pollTime":5000}`, getJSON(t, "/v1/config/12345"))
+		assert.JSONEq(t, `{"name":"D100", "pollTime":5000}`, getJSON(t, "/v1/devices/12345"))
 		testDone <- 1
 	}()
 
@@ -42,9 +42,9 @@ func TestV1Config(t *testing.T) {
 }
 
 func TestGetLastPathPart(t *testing.T) {
-	assert.Equal(t, "AABBCCDD", lastPartForPath(t, "/v1/config/AABBCCDD"))
-	assert.Equal(t, "config", lastPartForPath(t, "/v1/config/"))
-	assert.Equal(t, "config", lastPartForPath(t, "/v1/config"))
+	assert.Equal(t, "AABBCCDD", lastPartForPath(t, "/v1/devices/AABBCCDD"))
+	assert.Equal(t, "devices", lastPartForPath(t, "/v1/devices/"))
+	assert.Equal(t, "devices", lastPartForPath(t, "/v1/devices"))
 	assert.Equal(t, "v1", lastPartForPath(t, "/v1"))
 	assert.Equal(t, "v1", lastPartForPath(t, "v1"))
 }
