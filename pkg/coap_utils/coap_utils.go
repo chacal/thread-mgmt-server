@@ -3,6 +3,7 @@ package coap_utils
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
@@ -13,7 +14,13 @@ import (
 
 func LoggingMiddleware(next mux.Handler) mux.Handler {
 	return mux.HandlerFunc(func(w mux.ResponseWriter, r *mux.Message) {
-		log.Infof("Client %v, %v", w.Client().RemoteAddr(), r.String())
+		buf := fmt.Sprintf("%47s | %-19v |", w.Client().RemoteAddr(), r.Code)
+		path, err := r.Options.Path()
+		if err == nil {
+			buf = fmt.Sprintf("%s \"%v\"", buf, path)
+		}
+
+		log.Info(buf)
 		next.ServeCOAP(w, r)
 	})
 }
@@ -25,7 +32,7 @@ func RespondWithJSON(w mux.ResponseWriter, body interface{}) {
 		return
 	}
 
-	err = w.SetResponse(codes.Content, message.AppJSON, bytes.NewReader(payload))
+	err = setResponse(w, codes.Content, message.AppJSON, payload)
 	if err != nil {
 		RespondWithInternalServerError(w, errors.WithStack(err))
 	}
@@ -33,7 +40,7 @@ func RespondWithJSON(w mux.ResponseWriter, body interface{}) {
 
 func RespondWithInternalServerError(w mux.ResponseWriter, e error) {
 	log.Errorf("%+v", e)
-	w.SetResponse(codes.InternalServerError, message.TextPlain, nil)
+	setResponse(w, codes.InternalServerError, message.TextPlain, nil)
 }
 
 func GetLastPathPart(r *mux.Message) (string, error) {
@@ -48,4 +55,17 @@ func GetLastPathPart(r *mux.Message) (string, error) {
 	}
 
 	return parts[len(parts)-1], nil
+}
+
+func setResponse(w mux.ResponseWriter, code codes.Code, mediaType message.MediaType, payload []byte) error {
+	err := w.SetResponse(codes.Content, message.AppJSON, bytes.NewReader(payload))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	logResponse(code, payload)
+	return nil
+}
+
+func logResponse(code codes.Code, payload []byte) {
+	log.Infof("%49s %-19v | %s", "|", code, string(payload))
 }
