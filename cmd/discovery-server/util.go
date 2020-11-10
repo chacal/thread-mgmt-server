@@ -6,6 +6,14 @@ import (
 	gonet "net"
 )
 
+const Splash = `
+
+---------------------------
+- Thread Discovery Server -
+---------------------------
+
+`
+
 func LogOptions(opts Options) {
 	format := "Using configuration:\n" +
 		"--------------------\n" +

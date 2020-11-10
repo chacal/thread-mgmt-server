@@ -13,6 +13,14 @@ import (
 	"strconv"
 )
 
+const Splash = `
+
+----------------------------
+- Thread Management Server -
+----------------------------
+
+`
+
 type MgmtCoapServer struct {
 	conn *net.UDPConn
 	srv  *udp.Server

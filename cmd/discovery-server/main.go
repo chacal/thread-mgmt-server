@@ -27,6 +27,7 @@ func main() {
 	opts := Options{}
 	server.ParseOptions(&opts)
 	LogOptions(opts)
+	log.Info(Splash)
 	err := startCoapServer(opts)
 	log.Fatalf("%+v", err)
 }

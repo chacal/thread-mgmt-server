@@ -18,6 +18,8 @@ func main() {
 	server.ParseOptions(&opts)
 	logOptions(opts)
 
+	log.Info(Splash)
+
 	// Start device registry
 	reg, err := device_registry.Open(opts.DbFile)
 	if err != nil {
