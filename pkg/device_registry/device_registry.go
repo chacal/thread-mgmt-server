@@ -9,7 +9,7 @@ import (
 )
 
 type Device struct {
-	Name     string `json:"name,omitempty" binding:"required"`
+	Instance string `json:"instance,omitempty" binding:"required"`
 	PollTime int    `json:"pollTime,omitempty" binding:"required"`
 }
 

@@ -18,13 +18,13 @@ func TestV1GetDevices(t *testing.T) {
 	err := reg.Update("12345", device_registry.Device{"D100", 5000})
 	require.NoError(t, err)
 
-	T.AssertOKJson(t, `{"12345": {"name": "D100", "pollTime": 5000}}`, T.RecordGet(router, "/v1/devices"))
+	T.AssertOKJson(t, `{"12345": {"instance": "D100", "pollTime": 5000}}`, T.RecordGet(router, "/v1/devices"))
 }
 
 func TestV1PostDevice(t *testing.T) {
 	router, reg := setup(t)
 
-	T.AssertOK(t, T.RecordPost(router, "/v1/devices/12345", `{"id": "12345", "name": "D100", "pollTime": 5000}`))
+	T.AssertOK(t, T.RecordPost(router, "/v1/devices/12345", `{"id": "12345", "instance": "D100", "pollTime": 5000}`))
 
 	dev, err := reg.GetOrCreate("12345")
 	require.NoError(t, err)
