@@ -9,8 +9,8 @@ import (
 )
 
 type Device struct {
-	Instance string `json:"instance,omitempty" binding:"required"`
-	PollTime int    `json:"pollTime,omitempty" binding:"required"`
+	Instance   string `json:"instance,omitempty" binding:"required"`
+	PollPeriod int    `json:"pollPeriod,omitempty" binding:"required"`
 }
 
 type Registry struct {
