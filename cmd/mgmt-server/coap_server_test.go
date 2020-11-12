@@ -32,9 +32,9 @@ func TestGetV1Device(t *testing.T) {
 
 	go func() {
 		assert.JSONEq(t, `{}`, getJSON(t, "/v1/devices/12345"))
-		err = reg.Update("12345", device_registry.Device{"D100", 5000})
+		err = reg.Update("12345", device_registry.Device{"D100", -4, 5000})
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"D100", "pollPeriod":5000}`, getJSON(t, "/v1/devices/12345"))
+		assert.JSONEq(t, `{"instance":"D100", "txPower": -4, "pollPeriod":5000}`, getJSON(t, "/v1/devices/12345"))
 		testDone <- 1
 	}()
 

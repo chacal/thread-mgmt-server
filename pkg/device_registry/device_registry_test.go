@@ -13,7 +13,7 @@ func TestRegistry_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, Device{}, dev)
 
-	d := update(t, reg, "12345", Device{"D100", 5000})
+	d := update(t, reg, "12345", Device{"D100", -4, 5000})
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
@@ -24,7 +24,7 @@ func TestRegistry_CRUD(t *testing.T) {
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
-	assert.Equal(t, Device{}, dev)  // Should create new empty Device here
+	assert.Equal(t, Device{}, dev) // Should create new empty Device here
 }
 
 func TestRegistry_GetAll(t *testing.T) {
@@ -33,10 +33,10 @@ func TestRegistry_GetAll(t *testing.T) {
 	expected := map[string]Device{}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expected["12345"] = update(t, reg, "12345", Device{"D100", 5000})
+	expected["12345"] = update(t, reg, "12345", Device{"D100", -4, 5000})
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expected["AABBCCDD"] = update(t, reg, "AABBCCDD", Device{"D100", 5000})
+	expected["AABBCCDD"] = update(t, reg, "AABBCCDD", Device{"D100", -4, 5000})
 	assert.Equal(t, expected, getAll(t, reg))
 }
 

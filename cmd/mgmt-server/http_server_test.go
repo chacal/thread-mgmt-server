@@ -15,33 +15,33 @@ func TestV1GetDevices(t *testing.T) {
 
 	T.AssertOKJson(t, `{}`, T.RecordGet(router, "/v1/devices"))
 
-	err := reg.Update("12345", device_registry.Device{"D100", 5000})
+	err := reg.Update("12345", device_registry.Device{"D100", -4, 5000})
 	require.NoError(t, err)
 
-	T.AssertOKJson(t, `{"12345": {"instance": "D100", "pollPeriod": 5000}}`, T.RecordGet(router, "/v1/devices"))
+	T.AssertOKJson(t, `{"12345": {"instance": "D100", "txPower": -4, "pollPeriod": 5000}}`, T.RecordGet(router, "/v1/devices"))
 }
 
 func TestV1PostDevice(t *testing.T) {
 	router, reg := setup(t)
 
-	T.AssertOK(t, T.RecordPost(router, "/v1/devices/12345", `{"id": "12345", "instance": "D100", "pollPeriod": 5000}`))
+	T.AssertOK(t, T.RecordPost(router, "/v1/devices/12345", `{"id": "12345", "instance": "D100", "txPower": -4, "pollPeriod": 5000}`))
 
 	dev, err := reg.GetOrCreate("12345")
 	require.NoError(t, err)
-	assert.Equal(t, device_registry.Device{"D100", 5000}, dev)
+	assert.Equal(t, device_registry.Device{"D100", -4, 5000}, dev)
 }
 
 func TestV1DeleteDevice(t *testing.T) {
 	router, reg := setup(t)
 
-	err := reg.Update("12345", device_registry.Device{"D100", 5000})
+	err := reg.Update("12345", device_registry.Device{"D100", -4, 5000})
 	require.NoError(t, err)
 
 	T.AssertOK(t, T.RecordDelete(router, "/v1/devices/12345"))
 
 	dev, err := reg.GetOrCreate("12345")
 	require.NoError(t, err)
-	assert.Equal(t, device_registry.Device{}, dev)  // Should return empty device
+	assert.Equal(t, device_registry.Device{}, dev) // Should return empty device
 }
 
 func setup(t *testing.T) (*gin.Engine, *device_registry.Registry) {

@@ -10,6 +10,7 @@ import (
 
 type Device struct {
 	Instance   string `json:"instance,omitempty" binding:"required"`
+	TxPower    int    `json:"txPower,omitempty" binding:"required"`
 	PollPeriod int    `json:"pollPeriod,omitempty" binding:"required"`
 }
 
