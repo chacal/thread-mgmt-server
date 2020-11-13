@@ -67,7 +67,7 @@ func GetLastPathPart(r *mux.Message) (string, error) {
 }
 
 func setResponse(w mux.ResponseWriter, code codes.Code, mediaType message.MediaType, payload []byte) error {
-	err := w.SetResponse(codes.Content, message.AppJSON, bytes.NewReader(payload))
+	err := w.SetResponse(codes.Content, mediaType, bytes.NewReader(payload))
 	if err != nil {
 		return errors.WithStack(err)
 	}
