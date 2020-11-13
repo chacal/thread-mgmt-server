@@ -7,22 +7,14 @@ import (
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 	"github.com/plgd-dev/go-coap/v2/udp"
 	"github.com/plgd-dev/go-coap/v2/udp/client"
+	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
 	"strings"
 )
 
 func GetJSON(ctx context.Context, url string, path string) (string, error) {
-	conn, err := udp.Dial(url, udp.WithKeepAlive(nil))
-	if err != nil {
-		return "", errors.Wrapf(err, "couldn't dial to url %v", url)
-	}
-
-	req, err := client.NewGetRequest(ctx, path)
-	if err != nil {
-		return "", errors.Wrapf(err, "couldn't create request with path %v", path)
-	}
-	req.SetAccept(message.AppJSON)
-
-	resp, err := conn.Do(req)
+	resp, err := executeRequest(url, path, func() (*pool.Message, error) {
+		return client.NewGetRequest(ctx, path)
+	})
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -40,18 +32,9 @@ func GetJSON(ctx context.Context, url string, path string) (string, error) {
 }
 
 func PostJSON(ctx context.Context, url string, path string, payload string) (string, error) {
-	conn, err := udp.Dial(url, udp.WithKeepAlive(nil))
-	if err != nil {
-		return "", errors.Wrapf(err, "couldn't dial to url %v", url)
-	}
-
-	req, err := client.NewPostRequest(ctx, path, message.AppJSON, strings.NewReader(payload))
-	if err != nil {
-		return "", errors.Wrapf(err, "couldn't create request with path %v", path)
-	}
-	req.SetAccept(message.AppJSON)
-
-	resp, err := conn.Do(req)
+	resp, err := executeRequest(url, path, func() (*pool.Message, error) {
+		return client.NewPostRequest(ctx, path, message.AppJSON, strings.NewReader(payload))
+	})
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -68,4 +51,24 @@ func PostJSON(ctx context.Context, url string, path string, payload string) (str
 	default:
 		return "", errors.Errorf("got response code %v", resp.Code())
 	}
+}
+
+func executeRequest(url string, path string, reqCreator func() (*pool.Message, error)) (*pool.Message, error) {
+	conn, err := udp.Dial(url, udp.WithKeepAlive(nil))
+	if err != nil {
+		return nil, errors.Wrapf(err, "couldn't dial to url %v", url)
+	}
+
+	req, err := reqCreator()
+	if err != nil {
+		return nil, errors.Wrapf(err, "couldn't create request with path %v", path)
+	}
+	req.SetAccept(message.AppJSON)
+
+	resp, err := conn.Do(req)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return resp, nil
 }
