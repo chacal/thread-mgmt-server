@@ -42,21 +42,11 @@ func (r *Registry) GetOrCreate(id string) (Device, error) {
 	d := Device{}
 
 	err := r.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("Devices"))
-
-		log.Debugf("Getting device '%v'", id)
-
-		buf := b.Get([]byte(id))
-		if buf == nil {
-			return putDevice(tx, id, d)
-		} else {
-			dev, err := deviceFromJSON(buf)
-			if err != nil {
-				return err
-			}
-			log.Debugf("Device '%v' found: %+v", id, dev)
-			d = dev
+		dev, err := getOrCreateInTx(tx, id)
+		if err != nil {
+			return err
 		}
+		d = dev
 		return nil
 	})
 
@@ -65,6 +55,17 @@ func (r *Registry) GetOrCreate(id string) (Device, error) {
 
 func (r *Registry) Update(id string, dev Device) error {
 	return r.db.Update(func(tx *bolt.Tx) error {
+		return putDevice(tx, id, dev)
+	})
+}
+
+func (r *Registry) UpdateAddresses(id string, addresses []net.IP) error {
+	return r.db.Update(func(tx *bolt.Tx) error {
+		dev, err := getOrCreateInTx(tx, id)
+		if err != nil {
+			return err
+		}
+		dev.Addresses = addresses
 		return putDevice(tx, id, dev)
 	})
 }
@@ -95,6 +96,25 @@ func (r *Registry) Delete(id string) error {
 		}
 		return nil
 	})
+}
+
+func getOrCreateInTx(tx *bolt.Tx, id string) (Device, error) {
+	b := tx.Bucket([]byte("Devices"))
+
+	log.Debugf("Getting device '%v'", id)
+
+	buf := b.Get([]byte(id))
+	if buf == nil {
+		dev := Device{}
+		return dev, putDevice(tx, id, dev)
+	} else {
+		dev, err := deviceFromJSON(buf)
+		if err != nil {
+			return Device{}, err
+		}
+		log.Debugf("Device '%v' found: %+v", id, dev)
+		return dev, nil
+	}
 }
 
 func putDevice(tx *bolt.Tx, id string, dev Device) error {

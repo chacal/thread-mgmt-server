@@ -43,6 +43,15 @@ func RespondWithInternalServerError(w mux.ResponseWriter, e error) {
 	setResponse(w, codes.InternalServerError, message.TextPlain, nil)
 }
 
+func RespondWithBadRequest(w mux.ResponseWriter, e error) {
+	log.Errorf("%+v", e)
+	setResponse(w, codes.BadRequest, message.TextPlain, nil)
+}
+
+func RespondWithEmpty(w mux.ResponseWriter) {
+	setResponse(w, codes.Empty, message.TextPlain, nil)
+}
+
 func GetLastPathPart(r *mux.Message) (string, error) {
 	path, err := r.Message.Options.Path()
 	if err != nil {

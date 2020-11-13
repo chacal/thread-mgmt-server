@@ -7,6 +7,7 @@ import (
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 	"github.com/plgd-dev/go-coap/v2/udp"
 	"github.com/plgd-dev/go-coap/v2/udp/client"
+	"strings"
 )
 
 func GetJSON(ctx context.Context, url string, path string) (string, error) {
@@ -36,4 +37,35 @@ func GetJSON(ctx context.Context, url string, path string) (string, error) {
 	}
 
 	return string(body), nil
+}
+
+func PostJSON(ctx context.Context, url string, path string, payload string) (string, error) {
+	conn, err := udp.Dial(url, udp.WithKeepAlive(nil))
+	if err != nil {
+		return "", errors.Wrapf(err, "couldn't dial to url %v", url)
+	}
+
+	req, err := client.NewPostRequest(ctx, path, message.AppJSON, strings.NewReader(payload))
+	if err != nil {
+		return "", errors.Wrapf(err, "couldn't create request with path %v", path)
+	}
+	req.SetAccept(message.AppJSON)
+
+	resp, err := conn.Do(req)
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+
+	switch resp.Code() {
+	case codes.Empty:
+		return "", nil
+	case codes.Content:
+		body, err := resp.ReadBody()
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+		return string(body), nil
+	default:
+		return "", errors.Errorf("got response code %v", resp.Code())
+	}
 }

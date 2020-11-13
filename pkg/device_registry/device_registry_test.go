@@ -28,6 +28,20 @@ func TestRegistry_CRUD(t *testing.T) {
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
 	assert.Equal(t, Device{}, dev) // Should create new empty Device here
+
+	err = reg.UpdateAddresses("12345", []net.IP{ip})
+	require.NoError(t, err)
+
+	dev, err = reg.GetOrCreate("12345")
+	require.NoError(t, err)
+	assert.Equal(t, Device{Addresses: []net.IP{ip}}, dev)
+
+	err = reg.UpdateAddresses("12345", []net.IP{})
+	require.NoError(t, err)
+
+	dev, err = reg.GetOrCreate("12345")
+	require.NoError(t, err)
+	assert.Equal(t, Device{}, dev)
 }
 
 func TestRegistry_GetAll(t *testing.T) {

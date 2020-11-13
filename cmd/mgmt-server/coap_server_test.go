@@ -16,6 +16,8 @@ import (
 
 const TEST_COAP_PORT = 55683
 
+var TEST_COAP_URL = "localhost:" + strconv.Itoa(TEST_COAP_PORT)
+
 func TestGetV1Device(t *testing.T) {
 	reg := device_registry.CreateTestRegistry(t)
 
@@ -45,6 +47,34 @@ func TestGetV1Device(t *testing.T) {
 
 	<-testDone
 }
+
+func TestPostV1IP6(t *testing.T) {
+	reg := device_registry.CreateTestRegistry(t)
+
+	srv, err := NewCoapServer(TEST_COAP_PORT, reg)
+	require.NoError(t, err)
+	defer srv.Stop()
+
+	testDone := make(chan int, 2)
+
+	go func() {
+		err := srv.Serve()
+		assert.NoError(t, err)
+		testDone <- 1
+	}()
+
+	go func() {
+		dev := device_registry.Device{"D100", -4, 5000, nil}
+		err = reg.Update("12345", dev)
+		assert.NoError(t, err)
+
+		postJSON(t, "/v1/ip6/12345", `["ffff::1"]`)
+
+		dev2, err := reg.GetOrCreate("12345")
+		assert.NoError(t, err)
+
+		dev.Addresses = []net.IP{ip}
+		assert.Equal(t, dev, dev2)
 		testDone <- 1
 	}()
 
@@ -63,10 +93,19 @@ func getJSON(t *testing.T, path string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	res, err := coap_utils.GetJSON(ctx, "localhost:"+strconv.Itoa(TEST_COAP_PORT), path)
+	res, err := coap_utils.GetJSON(ctx, TEST_COAP_URL, path)
 	assert.NoError(t, err)
 
 	return res
+}
+
+func postJSON(t *testing.T, path string, payload string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	res, err := coap_utils.PostJSON(ctx, TEST_COAP_URL, path, payload)
+	assert.Equal(t, "", res)
+	assert.NoError(t, err)
 }
 
 func lastPartForPath(t *testing.T, path string) string {
