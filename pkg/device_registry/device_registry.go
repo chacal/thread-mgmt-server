@@ -5,13 +5,15 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"net"
 	"time"
 )
 
 type Device struct {
-	Instance   string `json:"instance,omitempty" binding:"required"`
-	TxPower    int    `json:"txPower,omitempty" binding:"required"`
-	PollPeriod int    `json:"pollPeriod,omitempty" binding:"required"`
+	Instance   string   `json:"instance,omitempty" binding:"required"`
+	TxPower    int      `json:"txPower,omitempty" binding:"required"`
+	PollPeriod int      `json:"pollPeriod,omitempty" binding:"required"`
+	Addresses  []net.IP `json:"addresses,omitempty"`
 }
 
 type Registry struct {

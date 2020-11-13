@@ -8,6 +8,7 @@ import (
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"net"
 	"strconv"
 	"testing"
 	"time"
@@ -32,9 +33,18 @@ func TestGetV1Device(t *testing.T) {
 
 	go func() {
 		assert.JSONEq(t, `{}`, getJSON(t, "/v1/devices/12345"))
-		err = reg.Update("12345", device_registry.Device{"D100", -4, 5000})
+		err = reg.Update("12345", device_registry.Device{"D100", -4, 5000, nil})
 		assert.NoError(t, err)
 		assert.JSONEq(t, `{"instance":"D100", "txPower": -4, "pollPeriod":5000}`, getJSON(t, "/v1/devices/12345"))
+
+		err = reg.Update("12345", device_registry.Device{"D100", -4, 5000, []net.IP{ip}})
+		assert.NoError(t, err)
+		assert.JSONEq(t, `{"instance":"D100", "txPower": -4, "pollPeriod":5000, "addresses": ["ffff::1"]}`, getJSON(t, "/v1/devices/12345"))
+		testDone <- 1
+	}()
+
+	<-testDone
+}
 		testDone <- 1
 	}()
 

@@ -3,8 +3,11 @@ package device_registry
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"net"
 	"testing"
 )
+
+var ip = net.ParseIP("ffff::1")
 
 func TestRegistry_CRUD(t *testing.T) {
 	reg := CreateTestRegistry(t)
@@ -13,7 +16,7 @@ func TestRegistry_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, Device{}, dev)
 
-	d := update(t, reg, "12345", Device{"D100", -4, 5000})
+	d := update(t, reg, "12345", Device{"D100", -4, 5000, []net.IP{ip}})
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
@@ -33,10 +36,10 @@ func TestRegistry_GetAll(t *testing.T) {
 	expected := map[string]Device{}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expected["12345"] = update(t, reg, "12345", Device{"D100", -4, 5000})
+	expected["12345"] = update(t, reg, "12345", Device{"D100", -4, 5000, []net.IP{ip}})
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expected["AABBCCDD"] = update(t, reg, "AABBCCDD", Device{"D100", -4, 5000})
+	expected["AABBCCDD"] = update(t, reg, "AABBCCDD", Device{"D100", -4, 5000, nil})
 	assert.Equal(t, expected, getAll(t, reg))
 }
 
