@@ -1,4 +1,6 @@
 .idea/
 bin/
 devices.db
+built/
 dist/
+node_modules/
