@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,7 @@ import (
 
 func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry) error {
 	router.Use(errorHandlingMiddleware)
+	router.Use(cors.Default())
 	router.GET("/v1/devices", handlerWithReg(reg, getV1Devices))
 	router.POST("/v1/devices/:device_id", handlerWithReg(reg, postV1Devices))
 	router.DELETE("/v1/devices/:device_id", handlerWithReg(reg, deleteV1Devices))
