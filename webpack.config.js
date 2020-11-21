@@ -4,10 +4,22 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 const ForkTsCheckerNotifierWebpackPlugin = require('fork-ts-checker-notifier-webpack-plugin')
 
 module.exports = {
+  mode: 'development',
   entry: './public/index.tsx',
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
+  },
+  devServer: {
+    contentBase: './dist',
+    port: 9000,
+    hot: true,
+    proxy: {
+      '/v1': {
+        target: 'http://localhost:8080',
+        secure: false
+      }
+    }
   },
   module: {
     rules: [
