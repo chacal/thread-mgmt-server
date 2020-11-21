@@ -1,5 +1,6 @@
 import React from 'react'
-import { Grid, Typography } from '@material-ui/core'
+import Typography from '@material-ui/core/Typography'
+import Grid from '@material-ui/core/Grid'
 
 export default function SubPanel(props: { heading: string, children?: React.ReactNode }) {
   return <Grid item container direction={'column'} xs={12} md={6} spacing={1}>

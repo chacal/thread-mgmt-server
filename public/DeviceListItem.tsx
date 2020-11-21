@@ -1,9 +1,11 @@
 import React from 'react'
-import { Grid, Paper, Typography } from '@material-ui/core'
 import { Device } from './DeviceList'
 import { makeStyles } from '@material-ui/core/styles'
 import DeviceSettingsPanel from './DeviceSettingsPanel'
 import SubPanel from './SubPanel'
+import Grid from '@material-ui/core/Grid'
+import Paper from '@material-ui/core/Paper'
+import Typography from '@material-ui/core/Typography'
 
 const useStyles = makeStyles((theme) => ({
   root: {

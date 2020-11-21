@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Button } from '@material-ui/core'
+import Button from '@material-ui/core/Button'
 
 export default function AsyncOperationButton(props: { disabled: boolean, onClick: () => Promise<void>, children?: React.ReactNode }) {
   const [inProgress, setInProgress] = useState(false)

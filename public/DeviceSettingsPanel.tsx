@@ -1,11 +1,17 @@
 import { Device } from './DeviceList'
 import React, { useState } from 'react'
-import { FormControl, Grid, InputLabel, MenuItem, Select, TextField, Typography } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import { SelectInputProps } from '@material-ui/core/Select/SelectInput'
 import { Autocomplete } from '@material-ui/lab'
 import SubPanel from './SubPanel'
 import AsyncOperationButton from './AsyncOperationButton'
+import Grid from '@material-ui/core/Grid'
+import Typography from '@material-ui/core/Typography'
+import TextField from '@material-ui/core/TextField'
+import FormControl from '@material-ui/core/FormControl'
+import InputLabel from '@material-ui/core/InputLabel'
+import Select from '@material-ui/core/Select'
+import MenuItem from '@material-ui/core/MenuItem'
 
 const useStyles = makeStyles((theme) => ({
   settingsPanelRow: {
