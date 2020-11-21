@@ -13,6 +13,8 @@
   "homepage": "https://github.com/chacal/thread-mgmt-server#readme",
   "devDependencies": {
     "copy-webpack-plugin": "^6.3.0",
+    "fork-ts-checker-notifier-webpack-plugin": "^3.0.0",
+    "fork-ts-checker-webpack-plugin": "^6.0.3",
     "ts-loader": "^8.0.10",
     "typescript": "^4.0.5",
     "webpack": "^5.4.0",
