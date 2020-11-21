@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import Grid from '@material-ui/core/Grid'
-import { sortBy, toPairs } from 'lodash'
+import sortBy from 'lodash/sortBy'
+import toPairs from 'lodash/toPairs'
 import DeviceListItem from './DeviceListItem'
 
 interface Devices {
