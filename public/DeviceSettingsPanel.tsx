@@ -1,27 +1,34 @@
 import { Device } from './DeviceList'
 import React, { useState } from 'react'
-import { Button, FormControl, Grid, InputLabel, MenuItem, Select, TextField } from '@material-ui/core'
+import { FormControl, Grid, InputLabel, MenuItem, Select, TextField, Typography } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import { SelectInputProps } from '@material-ui/core/Select/SelectInput'
 import { Autocomplete } from '@material-ui/lab'
 import SubPanel from './SubPanel'
+import AsyncOperationButton from './AsyncOperationButton'
 
 const useStyles = makeStyles((theme) => ({
   settingsPanelRow: {
     marginBottom: theme.spacing(1)
+  },
+  error: {
+    marginLeft: theme.spacing(2)
   }
 }))
 
 
-export default function DeviceSettingsPanel(props: { device: Device }) {
+export default function DeviceSettingsPanel(props: { dev: Device, onSaveDevice: (dev: Device) => Promise<void> }) {
   const classes = useStyles()
 
-  const [dev, setDevice] = useState(props.device)
+  const [dev, setDevice] = useState(props.dev)
   const [pollError, setPollError] = useState(false)
   const [instanceError, setInstanceError] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
-  const onSave = () => {
-    console.log('Clicked!', dev)
+  const onClickSave = () => {
+    setSaveError('')
+    return props.onSaveDevice(dev)
+      .catch(err => setSaveError(err.toString()))
   }
 
   return <SubPanel heading={'Settings'}>
@@ -47,9 +54,12 @@ export default function DeviceSettingsPanel(props: { device: Device }) {
       </Grid>
     </Grid>
     <Grid item xs={12} className={classes.settingsPanelRow}>
-      <Button variant={'outlined'} color={'primary'} disabled={pollError || instanceError} onClick={onSave}>
+      <AsyncOperationButton disabled={pollError || instanceError} onClick={onClickSave}>
         Save
-      </Button>
+      </AsyncOperationButton>
+      <Typography variant={'body1'} color={'error'} display={'inline'} className={classes.error}>
+        {saveError}
+      </Typography>
     </Grid>
   </SubPanel>
 }

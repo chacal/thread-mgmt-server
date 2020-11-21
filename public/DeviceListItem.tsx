@@ -12,15 +12,20 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-export default function DeviceListItem(props: { deviceId: string, device: Device }) {
+export default function DeviceListItem(props: { deviceId: string, device: Device, deviceSaved: (id: string, dev: Device) => void }) {
   const classes = useStyles()
+
+  const onSave = (dev: Device) => {
+    return postJSON('/v1/devices/' + props.deviceId, dev)
+      .then(() => props.deviceSaved(props.deviceId, dev))
+  }
 
   return <Grid item xs={12}>
     <Paper>
       <Grid container xs={12} spacing={3} className={classes.root}>
         <TitleRow deviceId={props.deviceId} instance={props.device.instance}/>
         <IPAddressesPanel addresses={props.device.addresses}/>
-        <DeviceSettingsPanel device={props.device}/>
+        <DeviceSettingsPanel key={props.deviceId} dev={props.device} onSaveDevice={onSave}/>
       </Grid>
     </Paper>
   </Grid>
@@ -51,4 +56,17 @@ function IPAddressesPanel(props: { addresses: string[] }) {
       </Grid>
     ) : null}
   </SubPanel>
+}
+
+function postJSON(url: string, data: any) {
+  return fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' },
+  })
+    .then(res => {
+      if (res.status !== 200) {
+        throw 'Status: ' + res.status
+      }
+    })
 }

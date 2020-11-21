@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Grid, Typography } from '@material-ui/core'
+import { Grid } from '@material-ui/core'
 import { sortBy, toPairs } from 'lodash'
 import DeviceListItem from './DeviceListItem'
 
@@ -22,9 +22,16 @@ export default function DeviceList() {
       .then(setDevices)
   }, [])
 
+  const deviceSaved = (deviceId: string, dev: Device) => {
+    setDevices(prev => ({ ...prev, [deviceId]: dev }))
+  }
+
   return (
     <Grid container spacing={6}>
-      {sortedDevices(devices).map(([deviceId, device]) => <DeviceListItem deviceId={deviceId} device={device}/>)}
+      {
+        sortedDevices(devices)
+          .map(([deviceId, device]) => <DeviceListItem deviceId={deviceId} device={device} deviceSaved={deviceSaved}/>)
+      }
     </Grid>
   )
 }
