@@ -51,7 +51,7 @@ function TitleRow(props: { deviceId: string, instance: string }) {
 function IPAddressesPanel(props: { addresses: string[] }) {
   return <SubPanel heading={'Addresses'}>
     {props.addresses ? props.addresses.map(addr =>
-      <Grid item xs={12}>
+      <Grid key={addr} item xs={12}>
         <Typography variant={'subtitle1'}>
           {addr}
         </Typography>

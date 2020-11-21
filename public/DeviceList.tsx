@@ -30,7 +30,8 @@ export default function DeviceList() {
     <Grid container spacing={6}>
       {
         sortedDevices(devices)
-          .map(([deviceId, device]) => <DeviceListItem deviceId={deviceId} device={device} deviceSaved={deviceSaved}/>)
+          .map(([deviceId, device]) =>
+            <DeviceListItem key={deviceId} deviceId={deviceId} device={device} deviceSaved={deviceSaved}/>)
       }
     </Grid>
   )
