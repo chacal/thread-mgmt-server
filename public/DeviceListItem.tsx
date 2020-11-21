@@ -24,7 +24,7 @@ export default function DeviceListItem(props: { deviceId: string, device: Device
 
   return <Grid item xs={12}>
     <Paper>
-      <Grid container xs={12} spacing={3} className={classes.root}>
+      <Grid container spacing={3} className={classes.root}>
         <TitleRow deviceId={props.deviceId} instance={props.device.instance}/>
         <IPAddressesPanel addresses={props.device.addresses}/>
         <DeviceSettingsPanel key={props.deviceId} dev={props.device} onSaveDevice={onSave}/>
