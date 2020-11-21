@@ -12,6 +12,7 @@ import FormControl from '@material-ui/core/FormControl'
 import InputLabel from '@material-ui/core/InputLabel'
 import Select from '@material-ui/core/Select'
 import MenuItem from '@material-ui/core/MenuItem'
+import isEqual from 'lodash/isEqual'
 
 const useStyles = makeStyles((theme) => ({
   settingsPanelRow: {
@@ -60,7 +61,7 @@ export default function DeviceSettingsPanel(props: { dev: Device, onSaveDevice: 
       </Grid>
     </Grid>
     <Grid item xs={12} className={classes.settingsPanelRow}>
-      <AsyncOperationButton disabled={pollError || instanceError} onClick={onClickSave}>
+      <AsyncOperationButton disabled={pollError || instanceError || isEqual(dev, props.dev)} onClick={onClickSave}>
         Save
       </AsyncOperationButton>
       <Typography variant={'body1'} color={'error'} display={'inline'} className={classes.error}>
