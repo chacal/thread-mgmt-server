@@ -38,6 +38,27 @@ func (r *Registry) Close() error {
 	return r.db.Close()
 }
 
+func (r *Registry) Get(id string) (*Device, error) {
+	var d *Device = nil
+
+	err := r.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("Devices"))
+		buf := b.Get([]byte(id))
+		if buf == nil {
+			return nil
+		}
+
+		dev, err := deviceFromJSON(buf)
+		if err == nil {
+			d = &dev
+		}
+
+		return err
+	})
+
+	return d, err
+}
+
 func (r *Registry) GetOrCreate(id string) (Device, error) {
 	d := Device{}
 

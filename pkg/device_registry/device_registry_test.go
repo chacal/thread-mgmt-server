@@ -57,6 +57,18 @@ func TestRegistry_GetAll(t *testing.T) {
 	assert.Equal(t, expected, getAll(t, reg))
 }
 
+func TestRegistry_Get(t *testing.T) {
+	reg := CreateTestRegistry(t)
+
+	assert.Equal(t, (*Device)(nil), get(t, reg, "12345"))
+
+	dev1 := update(t, reg, "12345", Device{"D100", -4, 5000, []net.IP{ip}})
+	assert.Equal(t, &dev1, get(t, reg, "12345"))
+
+	dev2 := update(t, reg, "AABBCCDD", Device{"D100", -4, 5000, nil})
+	assert.Equal(t, &dev2, get(t, reg, "AABBCCDD"))
+}
+
 func update(t *testing.T, reg *Registry, id string, d Device) Device {
 	err := reg.Update(id, d)
 	require.NoError(t, err)
@@ -67,4 +79,10 @@ func getAll(t *testing.T, reg *Registry) map[string]Device {
 	devices, err := reg.GetAll()
 	require.NoError(t, err)
 	return devices
+}
+
+func get(t *testing.T, reg *Registry, id string) *Device {
+	device, err := reg.Get(id)
+	require.NoError(t, err)
+	return device
 }
