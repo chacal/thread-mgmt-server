@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/chacal/thread-mgmt-server/pkg/device_gateway"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	"github.com/chacal/thread-mgmt-server/pkg/server"
 	log "github.com/sirupsen/logrus"
@@ -27,13 +28,15 @@ func main() {
 	}
 	defer reg.Close()
 
+	gw := device_gateway.Create()
+
 	serverExit := make(chan int, 2)
 
 	// Start CoAP server
 	go startCoapServer(opts, reg, serverExit)
 
 	// Start HTTP server
-	go startHttpServer(opts, reg, err, serverExit)
+	go startHttpServer(opts, reg, gw, serverExit)
 
 	// Wait for servers to exit
 	<-serverExit
@@ -51,8 +54,8 @@ func startCoapServer(opts Options, reg *device_registry.Registry, serverExit cha
 	serverExit <- 1
 }
 
-func startHttpServer(opts Options, reg *device_registry.Registry, err error, serverExit chan int) {
-	httpServer, err := NewHttpServer(opts, reg)
+func startHttpServer(opts Options, reg *device_registry.Registry, gw device_gateway.DeviceGateway, serverExit chan int) {
+	httpServer, err := NewHttpServer(opts, reg, gw)
 	if err != nil {
 		log.Fatalf("failed to create HTTP server: %+v", err)
 	}

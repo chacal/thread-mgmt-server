@@ -1,23 +1,26 @@
 package http
 
 import (
+	"github.com/chacal/thread-mgmt-server/pkg/device_gateway"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry) error {
+func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry, gw device_gateway.DeviceGateway) error {
 	router.Use(errorHandlingMiddleware)
 	router.Use(cors.Default())
-	router.GET("/v1/devices", handlerWithReg(reg, getV1Devices))
-	router.POST("/v1/devices/:device_id", handlerWithReg(reg, postV1Devices))
-	router.DELETE("/v1/devices/:device_id", handlerWithReg(reg, deleteV1Devices))
+	router.GET("/v1/devices", handlerWithDeps(reg, gw, getV1Devices))
+	router.POST("/v1/devices/:device_id", handlerWithDeps(reg, gw, postV1Devices))
+	router.DELETE("/v1/devices/:device_id", handlerWithDeps(reg, gw, deleteV1Devices))
+	router.POST("/v1/devices/:device_id/push", handlerWithDeps(reg, gw, postV1DevicesPush))
 	return serveStaticFromDir(router, "dist")
 }
 
@@ -25,7 +28,7 @@ type Id struct {
 	Id string `uri:"device_id" binding:"required"`
 }
 
-func getV1Devices(reg *device_registry.Registry, ctx *gin.Context) {
+func getV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
 	devices, err := reg.GetAll()
 	if err != nil {
 		ctx.Error(err)
@@ -34,16 +37,16 @@ func getV1Devices(reg *device_registry.Registry, ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, devices)
 }
 
-func postV1Devices(reg *device_registry.Registry, ctx *gin.Context) {
+func postV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
 	var id Id
 	if err := ctx.ShouldBindUri(&id); err != nil {
-		ctx.Error(errors.WithStack(err))
+		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
 		return
 	}
 
 	var dev device_registry.Device
 	if err := ctx.ShouldBindJSON(&dev); err != nil {
-		ctx.Error(errors.WithStack(err))
+		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
 		return
 	}
 
@@ -56,7 +59,7 @@ func postV1Devices(reg *device_registry.Registry, ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-func deleteV1Devices(reg *device_registry.Registry, ctx *gin.Context) {
+func deleteV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
 	var id Id
 	if err := ctx.ShouldBindUri(&id); err != nil {
 		ctx.Error(errors.WithStack(err))
@@ -72,9 +75,46 @@ func deleteV1Devices(reg *device_registry.Registry, ctx *gin.Context) {
 	ctx.Status(http.StatusOK)
 }
 
-func handlerWithReg(reg *device_registry.Registry, f func(reg *device_registry.Registry, ctx *gin.Context)) gin.HandlerFunc {
+type PushDestination struct {
+	Address net.IP `json:"address" binding:"required"`
+}
+
+func postV1DevicesPush(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+	var id Id
+	if err := ctx.ShouldBindUri(&id); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
+		return
+	}
+
+	var dst PushDestination
+	if err := ctx.ShouldBindJSON(&dst); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
+		return
+	}
+
+	dev, err := reg.Get(id.Id)
+	if err != nil {
+		ctx.Error(errors.WithStack(err))
+		return
+	}
+
+	if dev != nil {
+		err = gw.PushSettings(*dev, dst.Address)
+		if err != nil {
+			ctx.Error(errors.WithStack(err))
+		} else {
+			ctx.Status(http.StatusOK)
+		}
+	} else {
+		ctx.Status(http.StatusNotFound)
+	}
+}
+
+type depHandlerFunc = func(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context)
+
+func handlerWithDeps(reg *device_registry.Registry, gw device_gateway.DeviceGateway, f depHandlerFunc) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		f(reg, ctx)
+		f(reg, gw, ctx)
 	}
 }
 
@@ -84,7 +124,9 @@ func errorHandlingMiddleware(ctx *gin.Context) {
 		for _, e := range ctx.Errors {
 			log.Errorf("%+v", e.Err)
 		}
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		if ! ctx.IsAborted() {
+			ctx.AbortWithStatus(http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -99,7 +141,7 @@ func serveStaticFromDir(router *gin.Engine, dir string) error {
 	}
 
 	// Manually add index.html
-	router.StaticFile("/", dir + "/index.html")
+	router.StaticFile("/", dir+"/index.html")
 
 	return nil
 }

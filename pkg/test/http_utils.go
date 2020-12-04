@@ -13,6 +13,14 @@ func AssertOK(t *testing.T, w *httptest.ResponseRecorder) {
 	assert.Equal(t, http.StatusOK, w.Code)
 }
 
+func AssertNotFound(t *testing.T, w *httptest.ResponseRecorder) {
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func AssertBadRequest(t *testing.T, w *httptest.ResponseRecorder) {
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
 func AssertOKJson(t *testing.T, expected string, w *httptest.ResponseRecorder) {
 	AssertOK(t, w)
 	assert.Equal(t, "application/json; charset=utf-8", w.Header().Get("Content-Type"))

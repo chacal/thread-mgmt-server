@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/chacal/thread-mgmt-server/pkg/device_gateway"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	coap_routes "github.com/chacal/thread-mgmt-server/pkg/mgmt_routes/coap"
 	http_routes "github.com/chacal/thread-mgmt-server/pkg/mgmt_routes/http"
@@ -49,9 +50,9 @@ func (s *MgmtCoapServer) Stop() {
 	s.conn.Close()
 }
 
-func NewHttpServer(opts Options, reg *device_registry.Registry) (*http.Server, error) {
+func NewHttpServer(opts Options, reg *device_registry.Registry, gw device_gateway.DeviceGateway) (*http.Server, error) {
 	router := gin.Default()
-	err := http_routes.RegisterRoutes(router, reg)
+	err := http_routes.RegisterRoutes(router, reg, gw)
 	if err != nil {
 		return nil, err
 	}
