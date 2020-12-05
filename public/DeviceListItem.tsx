@@ -1,8 +1,8 @@
 import React from 'react'
 import { Device, DeviceAddress } from './DeviceList'
 import { makeStyles } from '@material-ui/core/styles'
-import DeviceSettingsPanel from './DeviceSettingsPanel'
 import SubPanel from './SubPanel'
+import DeviceSettingsPanel, { DeviceSettings } from './DeviceSettingsPanel'
 import Grid from '@material-ui/core/Grid'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
@@ -17,9 +17,14 @@ const useStyles = makeStyles((theme) => ({
 export default function DeviceListItem(props: { deviceId: string, device: Device, deviceSaved: (id: string, dev: Device) => void }) {
   const classes = useStyles()
 
-  const onSave = (dev: Device) => {
+  const onSaveDevice = (dev: Device) => {
     return postJSON('/v1/devices/' + props.deviceId, dev)
       .then(() => props.deviceSaved(props.deviceId, dev))
+  }
+
+  const onSaveSettings = (s: DeviceSettings) => {
+    const d = { ...props.device, ...s }
+    return onSaveDevice(d)
   }
 
   return <Grid item xs={12}>
@@ -27,10 +32,18 @@ export default function DeviceListItem(props: { deviceId: string, device: Device
       <Grid container spacing={3} className={classes.root}>
         <TitleRow deviceId={props.deviceId} instance={props.device.instance}/>
         <IPAddressesPanel addresses={props.device.addresses}/>
-        <DeviceSettingsPanel key={props.deviceId} dev={props.device} onSaveDevice={onSave}/>
+        <DeviceSettingsPanel settings={settingsFor(props.device)} onSaveSettings={onSaveSettings}/>
       </Grid>
     </Paper>
   </Grid>
+}
+
+function settingsFor(d: Device): DeviceSettings {
+  return {
+    instance: d.instance,
+    txPower: d.txPower,
+    pollPeriod: d.pollPeriod
+  }
 }
 
 function TitleRow(props: { deviceId: string, instance?: string }) {

@@ -1,4 +1,3 @@
-import { Device } from './DeviceList'
 import React, { useState } from 'react'
 import { makeStyles } from '@material-ui/core/styles'
 import { SelectInputProps } from '@material-ui/core/Select/SelectInput'
@@ -20,45 +19,51 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
+export interface DeviceSettings {
+  instance?: string
+  txPower?: number
+  pollPeriod?: number
+}
 
-export default function DeviceSettingsPanel(props: { dev: Device, onSaveDevice: (dev: Device) => Promise<void> }) {
+export default function DeviceSettingsPanel(props: { settings: DeviceSettings, onSaveSettings: (s: DeviceSettings) => Promise<void> }) {
   const classes = useStyles()
 
-  const [dev, setDevice] = useState(props.dev)
+  const [settings, setSettings] = useState(props.settings)
   const [pollError, setPollError] = useState(false)
   const [instanceError, setInstanceError] = useState(false)
   const [saveError, setSaveError] = useState('')
 
   const onClickSave = () => {
     setSaveError('')
-    return props.onSaveDevice(dev)
+    return props.onSaveSettings(settings)
       .catch(err => setSaveError(err.toString()))
   }
 
   return <SubPanel heading={'Settings'}>
     <Grid item container spacing={3} className={classes.settingsPanelRow}>
       <Grid item xs={4} sm={3} md={4} lg={3}>
-        <InstanceTextField instance={dev.instance} onInstanceChange={(instance, err) => {
+        <InstanceTextField instance={settings.instance} onInstanceChange={(instance, err) => {
           setInstanceError(err)
-          setDevice({ ...dev, instance: instance })
+          setSettings({ ...settings, instance: instance })
         }}/>
       </Grid>
       <Grid item xs={4} sm={3} md={4} lg={3}>
-        <TxPowerSelect txPower={dev.txPower} onTxPowerSelected={(e) => {
-          setDevice({ ...dev, txPower: parseInt(e.target.value as string) })
+        <TxPowerSelect txPower={settings.txPower} onTxPowerSelected={(e) => {
+          setSettings({ ...settings, txPower: parseInt(e.target.value as string) })
         }}/>
       </Grid>
       <Grid item xs={4} sm={3} md={4} lg={3}>
-        <PollPeriodAutoComplete pollPeriod={dev.pollPeriod} onPollPeriodChange={(period, err) => {
+        <PollPeriodAutoComplete pollPeriod={settings.pollPeriod} onPollPeriodChange={(period, err) => {
           setPollError(err)
           if (!err) {
-            setDevice({ ...dev, pollPeriod: period })
+            setSettings({ ...settings, pollPeriod: period })
           }
         }}/>
       </Grid>
     </Grid>
     <Grid item xs={12} className={classes.settingsPanelRow}>
-      <AsyncOperationButton disabled={pollError || instanceError || isEqual(dev, props.dev)} onClick={onClickSave}>
+      <AsyncOperationButton disabled={pollError || instanceError || isEqual(settings, props.settings)}
+                            onClick={onClickSave}>
         Save
       </AsyncOperationButton>
       <ErrorMessage msg={saveError}/>
@@ -81,7 +86,8 @@ function InstanceTextField(props: { instance?: string, onInstanceChange: (instan
 function TxPowerSelect(props: { txPower?: number, onTxPowerSelected: SelectInputProps['onChange'] }) {
   return <FormControl fullWidth>
     <InputLabel id="txpower-label">TX Power</InputLabel>
-    <Select labelId="txpower-label" defaultValue={props.txPower ? props.txPower : ''} onChange={props.onTxPowerSelected}>
+    <Select labelId="txpower-label" defaultValue={props.txPower ? props.txPower : ''}
+            onChange={props.onTxPowerSelected}>
       <MenuItem value={8}>8 dBm</MenuItem>
       <MenuItem value={4}>4 dBm</MenuItem>
       <MenuItem value={0}>0 dBm</MenuItem>
