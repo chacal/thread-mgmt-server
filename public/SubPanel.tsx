@@ -5,7 +5,7 @@ import Grid from '@material-ui/core/Grid'
 export default function SubPanel(props: { heading: string, children?: React.ReactNode }) {
   return <Grid item container direction={'column'} xs={12} md={6} spacing={1}>
     <Grid item>
-      <Typography variant={'subtitle1'} color={'textSecondary'}>{props.heading}</Typography>
+      <Typography variant={'h6'} color={'primary'}>{props.heading}</Typography>
     </Grid>
     <Grid item container>
       {props.children}

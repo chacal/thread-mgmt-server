@@ -33,7 +33,7 @@ export default function DeviceList() {
   }
 
   return (
-    <Grid container spacing={6}>
+    <Grid container spacing={7}>
       {
         sortedDevices(devices)
           .map(([deviceId, device]) =>

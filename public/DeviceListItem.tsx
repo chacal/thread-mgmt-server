@@ -34,7 +34,7 @@ export default function DeviceListItem(props: { deviceId: string, device: Device
 
   return <Grid item xs={12}>
     <Paper>
-      <Grid container spacing={3} className={classes.root}>
+      <Grid container spacing={5} className={classes.root}>
         <TitleRow deviceId={props.deviceId} instance={props.device.instance}/>
         <IPAddressesPanel addresses={props.device.addresses} onSaveAddresses={onSaveAddresses}/>
         <DeviceSettingsPanel settings={settingsFor(props.device)} onSaveSettings={onSaveSettings}/>
@@ -53,7 +53,7 @@ function settingsFor(d: Device): DeviceSettings {
 
 function TitleRow(props: { deviceId: string, instance?: string }) {
   return <Grid item container alignItems={'flex-end'}>
-    <Grid item xs={2} md={1}>
+    <Grid item xs={3} md={1}>
       <Typography variant={'h5'} color={'primary'}>
         {props.instance ? props.instance : 'N/A'}
       </Typography>
