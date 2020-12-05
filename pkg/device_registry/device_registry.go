@@ -15,9 +15,9 @@ type DeviceAddress struct {
 }
 
 type Device struct {
-	Instance   string          `json:"instance,omitempty" binding:"required"`
-	TxPower    int             `json:"txPower,omitempty" binding:"required"`
-	PollPeriod int             `json:"pollPeriod,omitempty" binding:"required"`
+	Instance   string          `json:"instance,omitempty"`
+	TxPower    int             `json:"txPower,omitempty"`
+	PollPeriod int             `json:"pollPeriod,omitempty"`
 	Addresses  []DeviceAddress `json:"addresses,omitempty"`
 }
 
