@@ -6,20 +6,17 @@ import Autocomplete from '@material-ui/lab/Autocomplete'
 import SubPanel from './SubPanel'
 import AsyncOperationButton from './AsyncOperationButton'
 import Grid from '@material-ui/core/Grid'
-import Typography from '@material-ui/core/Typography'
 import TextField from '@material-ui/core/TextField'
 import FormControl from '@material-ui/core/FormControl'
 import InputLabel from '@material-ui/core/InputLabel'
 import Select from '@material-ui/core/Select'
 import MenuItem from '@material-ui/core/MenuItem'
 import isEqual from 'lodash/isEqual'
+import ErrorMessage from './ErrorMessage'
 
 const useStyles = makeStyles((theme) => ({
   settingsPanelRow: {
     marginBottom: theme.spacing(1)
-  },
-  error: {
-    marginLeft: theme.spacing(2)
   }
 }))
 
@@ -64,9 +61,7 @@ export default function DeviceSettingsPanel(props: { dev: Device, onSaveDevice: 
       <AsyncOperationButton disabled={pollError || instanceError || isEqual(dev, props.dev)} onClick={onClickSave}>
         Save
       </AsyncOperationButton>
-      <Typography variant={'body1'} color={'error'} display={'inline'} className={classes.error}>
-        {saveError}
-      </Typography>
+      <ErrorMessage msg={saveError}/>
     </Grid>
   </SubPanel>
 }
