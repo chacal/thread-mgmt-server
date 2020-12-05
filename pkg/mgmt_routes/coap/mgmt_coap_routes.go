@@ -23,6 +23,7 @@ func getV1Device(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Mes
 	}
 
 	dev, err := reg.GetOrCreate(deviceId)
+	dev.Addresses = []device_registry.DeviceAddress{} // Don't send IP addresses as device doesn't need them
 	if err != nil {
 		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
 	}
