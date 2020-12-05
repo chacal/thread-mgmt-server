@@ -30,7 +30,7 @@ func (r *deviceGateway) PushSettings(d device_registry.Device, destination net.I
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	d.Addresses = []net.IP{} // Don't send IP addresses as device doesn't need them
+	d.Addresses = []device_registry.DeviceAddress{} // Don't send IP addresses as device doesn't need them
 	payload, err := json.Marshal(d)
 	if err != nil {
 		return errors.WithStack(err)

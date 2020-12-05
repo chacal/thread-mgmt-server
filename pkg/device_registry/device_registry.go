@@ -9,11 +9,16 @@ import (
 	"time"
 )
 
+type DeviceAddress struct {
+	Ip   net.IP `json:"ip"`
+	Main bool   `json:"main"`
+}
+
 type Device struct {
-	Instance   string   `json:"instance,omitempty" binding:"required"`
-	TxPower    int      `json:"txPower,omitempty" binding:"required"`
-	PollPeriod int      `json:"pollPeriod,omitempty" binding:"required"`
-	Addresses  []net.IP `json:"addresses,omitempty"`
+	Instance   string          `json:"instance,omitempty" binding:"required"`
+	TxPower    int             `json:"txPower,omitempty" binding:"required"`
+	PollPeriod int             `json:"pollPeriod,omitempty" binding:"required"`
+	Addresses  []DeviceAddress `json:"addresses,omitempty"`
 }
 
 type Registry struct {
@@ -86,7 +91,12 @@ func (r *Registry) UpdateAddresses(id string, addresses []net.IP) error {
 		if err != nil {
 			return err
 		}
-		dev.Addresses = addresses
+		deviceAddresses := make([]DeviceAddress, len(addresses))
+		// Reset main status of all addresses to false
+		for i, a := range addresses {
+			deviceAddresses[i] = DeviceAddress{a, false}
+		}
+		dev.Addresses = deviceAddresses
 		return putDevice(tx, id, dev)
 	})
 }

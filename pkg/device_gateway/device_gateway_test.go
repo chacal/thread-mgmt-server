@@ -20,7 +20,7 @@ func TestGateway_PushSettings(t *testing.T) {
 		assertJSONPost(t, r, "api/settings", `{"instance": "D100","txPower": -4,"pollPeriod": 5000}`)
 
 		gw := Create()
-		dev := device_registry.Device{"D100", -4, 5000, []gonet.IP{LOCAL_IP}}
+		dev := device_registry.Device{"D100", -4, 5000, []device_registry.DeviceAddress{{LOCAL_IP, false}}}
 		err := gw.PushSettings(dev, LOCAL_IP)
 		assert.NoError(t, err)
 		done <- 1

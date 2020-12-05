@@ -8,6 +8,7 @@ import (
 )
 
 var ip = net.ParseIP("ffff::1")
+var addr = []DeviceAddress{{ip, false}}
 
 func TestRegistry_CRUD(t *testing.T) {
 	reg := CreateTestRegistry(t)
@@ -16,7 +17,7 @@ func TestRegistry_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, Device{}, dev)
 
-	d := update(t, reg, "12345", Device{"D100", -4, 5000, []net.IP{ip}})
+	d := update(t, reg, "12345", Device{"D100", -4, 5000, addr})
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
@@ -34,7 +35,7 @@ func TestRegistry_CRUD(t *testing.T) {
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
-	assert.Equal(t, Device{Addresses: []net.IP{ip}}, dev)
+	assert.Equal(t, Device{Addresses: addr}, dev)
 
 	err = reg.UpdateAddresses("12345", []net.IP{})
 	require.NoError(t, err)
@@ -50,7 +51,7 @@ func TestRegistry_GetAll(t *testing.T) {
 	expected := map[string]Device{}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expected["12345"] = update(t, reg, "12345", Device{"D100", -4, 5000, []net.IP{ip}})
+	expected["12345"] = update(t, reg, "12345", Device{"D100", -4, 5000, addr})
 	assert.Equal(t, expected, getAll(t, reg))
 
 	expected["AABBCCDD"] = update(t, reg, "AABBCCDD", Device{"D100", -4, 5000, nil})
@@ -62,7 +63,7 @@ func TestRegistry_Get(t *testing.T) {
 
 	assert.Equal(t, (*Device)(nil), get(t, reg, "12345"))
 
-	dev1 := update(t, reg, "12345", Device{"D100", -4, 5000, []net.IP{ip}})
+	dev1 := update(t, reg, "12345", Device{"D100", -4, 5000, addr})
 	assert.Equal(t, &dev1, get(t, reg, "12345"))
 
 	dev2 := update(t, reg, "AABBCCDD", Device{"D100", -4, 5000, nil})

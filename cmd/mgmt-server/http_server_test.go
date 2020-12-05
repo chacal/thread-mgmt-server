@@ -15,6 +15,7 @@ import (
 )
 
 var ip = net.ParseIP("ffff::1")
+var addr = []device_registry.DeviceAddress{{ip, false}}
 
 func TestV1GetDevices(t *testing.T) {
 	router, reg := setup(t)
@@ -26,12 +27,12 @@ func TestV1GetDevices(t *testing.T) {
 
 	T.AssertOKJson(t, `{"12345": {"instance": "D100", "txPower": -4, "pollPeriod": 5000}}`, T.RecordGet(router, "/v1/devices"))
 
-	err = reg.Update("ABCDE", device_registry.Device{"D100", -4, 5000, []net.IP{ip}})
+	err = reg.Update("ABCDE", device_registry.Device{"D100", -4, 5000, addr})
 	require.NoError(t, err)
 
 	T.AssertOKJson(
 		t,
-		`{"12345": {"instance": "D100", "txPower": -4, "pollPeriod": 5000}, "ABCDE": {"instance": "D100", "txPower": -4, "pollPeriod": 5000, "addresses": ["ffff::1"]}}`,
+		`{"12345": {"instance": "D100", "txPower": -4, "pollPeriod": 5000}, "ABCDE": {"instance": "D100", "txPower": -4, "pollPeriod": 5000, "addresses": [{"ip": "ffff::1", "main": false}]}}`,
 		T.RecordGet(router, "/v1/devices"),
 	)
 }
@@ -55,8 +56,8 @@ func TestV1PostDevice(t *testing.T) {
 		},
 		"with address": {
 			"ABCDE",
-			`{"id": "ABCDE", "instance": "D100", "txPower": -4, "pollPeriod": 5000, "addresses": ["ffff::1"]}`,
-			device_registry.Device{"D100", -4, 5000, []net.IP{ip}},
+			`{"id": "ABCDE", "instance": "D100", "txPower": -4, "pollPeriod": 5000, "addresses": [{"ip": "ffff::1", "main": false}]}`,
+			device_registry.Device{"D100", -4, 5000, addr},
 		},
 	}
 
