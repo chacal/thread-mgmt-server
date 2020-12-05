@@ -71,7 +71,7 @@ export default function DeviceSettingsPanel(props: { dev: Device, onSaveDevice: 
   </SubPanel>
 }
 
-function InstanceTextField(props: { instance: string, onInstanceChange: (instance: string, err: boolean) => void }) {
+function InstanceTextField(props: { instance?: string, onInstanceChange: (instance: string, err: boolean) => void }) {
   const regex = /^[\w]{2,4}$/
   const [err, setErr] = useState(false)
 
@@ -83,10 +83,10 @@ function InstanceTextField(props: { instance: string, onInstanceChange: (instanc
   }}/>
 }
 
-function TxPowerSelect(props: { txPower: number, onTxPowerSelected: SelectInputProps['onChange'] }) {
+function TxPowerSelect(props: { txPower?: number, onTxPowerSelected: SelectInputProps['onChange'] }) {
   return <FormControl fullWidth>
     <InputLabel id="txpower-label">TX Power</InputLabel>
-    <Select labelId="txpower-label" defaultValue={props.txPower} onChange={props.onTxPowerSelected}>
+    <Select labelId="txpower-label" defaultValue={props.txPower ? props.txPower : ''} onChange={props.onTxPowerSelected}>
       <MenuItem value={8}>8 dBm</MenuItem>
       <MenuItem value={4}>4 dBm</MenuItem>
       <MenuItem value={0}>0 dBm</MenuItem>
@@ -99,14 +99,14 @@ function TxPowerSelect(props: { txPower: number, onTxPowerSelected: SelectInputP
   </FormControl>
 }
 
-function PollPeriodAutoComplete(props: { pollPeriod: number, onPollPeriodChange: (period: number, err: boolean) => void }) {
+function PollPeriodAutoComplete(props: { pollPeriod?: number, onPollPeriodChange: (period: number, err: boolean) => void }) {
   const [err, setErr] = useState(false)
   const regex = /^([\d]+)(ms$| ms$|[\s]*$)/
 
   return <Autocomplete
     freeSolo
     options={['200 ms', '500 ms', '1000 ms', '2000 ms', '5000 ms', '10000 ms', '15000 ms']}
-    value={props.pollPeriod.toString() + ' ms'}
+    value={props.pollPeriod ? props.pollPeriod.toString() + ' ms' : ''}
     onInputChange={(e, val, reason) => {
       const matches = val.match(regex)
       if (matches !== null) {

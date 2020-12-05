@@ -8,11 +8,16 @@ interface Devices {
   [key: string]: Device
 }
 
+export interface DeviceAddress {
+  ip: string
+  main: boolean
+}
+
 export interface Device {
-  instance: string
-  txPower: number
-  pollPeriod: number
-  addresses: string[]
+  instance?: string
+  txPower?: number
+  pollPeriod?: number
+  addresses?: DeviceAddress[]
 }
 
 export default function DeviceList() {

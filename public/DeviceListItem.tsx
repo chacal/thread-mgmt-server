@@ -1,5 +1,5 @@
 import React from 'react'
-import { Device } from './DeviceList'
+import { Device, DeviceAddress } from './DeviceList'
 import { makeStyles } from '@material-ui/core/styles'
 import DeviceSettingsPanel from './DeviceSettingsPanel'
 import SubPanel from './SubPanel'
@@ -33,7 +33,7 @@ export default function DeviceListItem(props: { deviceId: string, device: Device
   </Grid>
 }
 
-function TitleRow(props: { deviceId: string, instance: string }) {
+function TitleRow(props: { deviceId: string, instance?: string }) {
   return <Grid item container alignItems={'flex-end'}>
     <Grid item xs={2} md={1}>
       <Typography variant={'h5'} color={'primary'}>
@@ -48,12 +48,12 @@ function TitleRow(props: { deviceId: string, instance: string }) {
   </Grid>
 }
 
-function IPAddressesPanel(props: { addresses: string[] }) {
+function IPAddressesPanel(props: { addresses?: DeviceAddress[] }) {
   return <SubPanel heading={'Addresses'}>
     {props.addresses ? props.addresses.map(addr =>
-      <Grid key={addr} item xs={12}>
+      <Grid key={addr.ip} item xs={12}>
         <Typography variant={'subtitle1'}>
-          {addr}
+          {addr.ip}
         </Typography>
       </Grid>
     ) : null}
