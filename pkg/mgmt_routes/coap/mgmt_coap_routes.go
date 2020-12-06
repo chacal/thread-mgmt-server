@@ -7,31 +7,29 @@ import (
 	"github.com/pkg/errors"
 	"github.com/plgd-dev/go-coap/v2/mux"
 	"io/ioutil"
-	"net"
 )
 
 func RegisterRoutes(router *mux.Router, reg *device_registry.Registry) {
 	router.Use(coap_utils.LoggingMiddleware)
-	router.Handle("v1/devices/", handlerWithReg(reg, getV1Device))
-	router.Handle("v1/ip6/", handlerWithReg(reg, postV1IP6))
+	router.Handle("v1/defaults/", handlerWithReg(reg, getV1Defaults))
+	router.Handle("v1/state/", handlerWithReg(reg, postV1State))
 }
 
-func getV1Device(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message) {
+func getV1Defaults(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message) {
 	deviceId, err := coap_utils.GetLastPathPart(r)
 	if err != nil {
 		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
 	}
 
 	dev, err := reg.GetOrCreate(deviceId)
-	dev.Addresses = []device_registry.DeviceAddress{} // Don't send IP addresses as device doesn't need them
 	if err != nil {
 		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
 	}
 
-	coap_utils.RespondWithJSON(w, dev)
+	coap_utils.RespondWithJSON(w, dev.Defaults)
 }
 
-func postV1IP6(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message) {
+func postV1State(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message) {
 	deviceId, err := coap_utils.GetLastPathPart(r)
 	if err != nil {
 		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
@@ -42,13 +40,13 @@ func postV1IP6(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Messa
 		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
 	}
 
-	var addresses []net.IP
-	err = json.Unmarshal(body, &addresses)
+	var state device_registry.State
+	err = json.Unmarshal(body, &state)
 	if err != nil {
 		coap_utils.RespondWithBadRequest(w, errors.WithStack(err))
 	}
 
-	err = reg.UpdateAddresses(deviceId, addresses)
+	err = reg.UpdateState(deviceId, state)
 	if err != nil {
 		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
 	}

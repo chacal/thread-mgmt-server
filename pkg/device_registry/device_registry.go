@@ -10,9 +10,9 @@ import (
 )
 
 type Device struct {
-	Defaults Defaults `json:"defaults,omitempty"`
-	State    State    `json:"state,omitempty"`
-	Config   Config   `json:"config,omitempty"`
+	Defaults Defaults `json:"defaults"`
+	State    State    `json:"state"`
+	Config   Config   `json:"config"`
 }
 
 type Defaults struct {

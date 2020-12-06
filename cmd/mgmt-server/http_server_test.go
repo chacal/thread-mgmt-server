@@ -15,58 +15,87 @@ import (
 )
 
 var ip = net.ParseIP("ffff::1")
-var addr = []device_registry.DeviceAddress{{ip, false}}
+var addr = []net.IP{ip}
 
 func TestV1GetDevices(t *testing.T) {
 	router, reg := setup(t)
 
 	T.AssertOKJson(t, `{}`, T.RecordGet(router, "/v1/devices"))
 
-	err := reg.Update("12345", device_registry.Device{"D100", -4, 5000, nil})
+	err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", -4, 5000})
 	require.NoError(t, err)
 
-	T.AssertOKJson(t, `{"12345": {"instance": "D100", "txPower": -4, "pollPeriod": 5000}}`, T.RecordGet(router, "/v1/devices"))
+	T.AssertOKJson(t,
+		`{
+			"12345": {
+				"defaults": {
+					"instance": "D100",
+					"txPower": -4,
+					"pollPeriod": 5000
+				},
+				"config": {
+				},
+				"state": {
+				}
+			}
+		}`,
+		T.RecordGet(router, "/v1/devices"),
+	)
 
-	err = reg.Update("ABCDE", device_registry.Device{"D100", -4, 5000, addr})
+	err = reg.UpdateDefaults("ABCDE", device_registry.Defaults{"D100", -4, 5000})
+	require.NoError(t, err)
+	err = reg.UpdateState("ABCDE", device_registry.State{addr})
 	require.NoError(t, err)
 
-	T.AssertOKJson(
-		t,
-		`{"12345": {"instance": "D100", "txPower": -4, "pollPeriod": 5000}, "ABCDE": {"instance": "D100", "txPower": -4, "pollPeriod": 5000, "addresses": [{"ip": "ffff::1", "main": false}]}}`,
+	T.AssertOKJson(t,
+		`{
+			"12345": {
+				"defaults": { "instance": "D100", "txPower": -4, "pollPeriod": 5000 },
+				"config": {},
+				"state": {}
+			},
+			"ABCDE": {
+				"defaults": { "instance": "D100", "txPower": -4, "pollPeriod": 5000 },
+				"config": {},
+				"state": {
+					"addresses": [ "ffff::1" ]
+				}
+			}
+		}`,
 		T.RecordGet(router, "/v1/devices"),
 	)
 }
 
-func TestV1PostDevice(t *testing.T) {
+func TestV1PostDefaults(t *testing.T) {
 	router, reg := setup(t)
 	tests := map[string]struct {
 		id       string
 		payload  string
-		expected device_registry.Device
+		expected device_registry.Defaults
 	}{
 		"no addresses": {
 			"12345",
-			`{"id": "12345", "instance": "D100", "txPower": -4, "pollPeriod": 5000}`,
-			device_registry.Device{"D100", -4, 5000, nil},
+			`{"instance": "D100", "txPower": -4, "pollPeriod": 5000}`,
+			device_registry.Defaults{"D100", -4, 5000},
 		},
-		"empty addresses": {
+		"missing poll period": {
 			"ABCDE",
-			`{"id": "ABCDE", "instance": "D100", "txPower": -4, "pollPeriod": 5000, "addresses": []}`,
-			device_registry.Device{"D100", -4, 5000, nil},
+			`{"instance": "D100", "txPower": -4}`,
+			device_registry.Defaults{Instance: "D100", TxPower: -4},
 		},
-		"with address": {
+		"replaces previous defaults": {
 			"ABCDE",
-			`{"id": "ABCDE", "instance": "D100", "txPower": -4, "pollPeriod": 5000, "addresses": [{"ip": "ffff::1", "main": false}]}`,
-			device_registry.Device{"D100", -4, 5000, addr},
+			`{"pollPeriod": 5000}`,
+			device_registry.Defaults{PollPeriod: 5000},
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			T.AssertOK(t, T.RecordPost(router, "/v1/devices/"+tc.id, tc.payload))
-			dev, err := reg.GetOrCreate(tc.id)
+			T.AssertOK(t, T.RecordPost(router, "/v1/devices/"+tc.id+"/defaults", tc.payload))
+			defaults, err := reg.GetDefaults(tc.id)
 			require.NoError(t, err)
-			assert.Equal(t, tc.expected, dev)
+			assert.Equal(t, &tc.expected, defaults)
 		})
 	}
 }
@@ -74,7 +103,7 @@ func TestV1PostDevice(t *testing.T) {
 func TestV1DeleteDevice(t *testing.T) {
 	router, reg := setup(t)
 
-	err := reg.Update("12345", device_registry.Device{"D100", -4, 5000, nil})
+	err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", -4, 5000})
 	require.NoError(t, err)
 
 	T.AssertOK(t, T.RecordDelete(router, "/v1/devices/12345"))
@@ -92,11 +121,11 @@ func TestV1PostDevicePush(t *testing.T) {
 	T.AssertNotFound(t, T.RecordPost(router, "/v1/devices/12345/push", `{"address": "ffff::1"}`))
 	T.AssertBadRequest(t, T.RecordPost(router, "/v1/devices/12345/push", ""))
 
-	dev := device_registry.Device{"D100", -4, 5000, nil}
-	err := reg.Update("12345", dev)
+	dev := device_registry.Defaults{"D100", -4, 5000}
+	err := reg.UpdateDefaults("12345", dev)
 	require.NoError(t, err)
 
-	mockGw.EXPECT().PushSettings(gomock.Eq(dev), gomock.Eq(net.ParseIP("ffff::1")))
+	mockGw.EXPECT().PushDefaults(gomock.Eq(dev), gomock.Eq(net.ParseIP("ffff::1")))
 	T.AssertOK(t, T.RecordPost(router, "/v1/devices/12345/push", `{"address": "ffff::1"}`))
 }
 

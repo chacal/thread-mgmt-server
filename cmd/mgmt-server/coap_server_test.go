@@ -17,33 +17,44 @@ const TEST_COAP_PORT = 55683
 
 var TEST_COAP_URL = "localhost:" + strconv.Itoa(TEST_COAP_PORT)
 
-func TestGetV1Device(t *testing.T) {
+func TestGetV1Defaults(t *testing.T) {
 	coapServerTest(t, func(t *testing.T, reg *device_registry.Registry, done chan int) {
-		assert.JSONEq(t, `{}`, getJSON(t, "/v1/devices/12345"))
-		err := reg.Update("12345", device_registry.Device{"D100", -4, 5000, nil})
+		assert.JSONEq(t, `{}`, getJSON(t, "/v1/defaults/12345"))
+		err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", -4, 5000})
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"D100", "txPower": -4, "pollPeriod":5000}`, getJSON(t, "/v1/devices/12345"))
+		assert.JSONEq(t, `{"instance":"D100", "txPower": -4, "pollPeriod":5000}`, getJSON(t, "/v1/defaults/12345"))
 
-		err = reg.Update("12345", device_registry.Device{"D100", -4, 5000, addr})
+		err = reg.UpdateDefaults("12345", device_registry.Defaults{"D105", 4, 500})
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"D100", "txPower": -4, "pollPeriod":5000}`, getJSON(t, "/v1/devices/12345"))
+		assert.JSONEq(t, `{"instance":"D105", "txPower": 4, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
+
+		err = reg.UpdateState("12345", device_registry.State{addr})
+		assert.NoError(t, err)
+		assert.JSONEq(t, `{"instance":"D105", "txPower": 4, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
 		done <- 1
 	})
 }
 
-func TestPostV1IP6(t *testing.T) {
+func TestPostV1State(t *testing.T) {
 	coapServerTest(t, func(t *testing.T, reg *device_registry.Registry, done chan int) {
-		dev := device_registry.Device{"D100", -4, 5000, nil}
-		err := reg.Update("12345", dev)
+		postJSON(t, "/v1/state/12345", `{"addresses": ["ffff::1"]}`)
+
+		dev, err := reg.GetOrCreate("12345")
 		assert.NoError(t, err)
+		assert.Equal(t, dev, device_registry.Device{State: device_registry.State{addr}})
 
-		postJSON(t, "/v1/ip6/12345", `["ffff::1"]`)
-
-		dev2, err := reg.GetOrCreate("12345")
+		dev, err = reg.GetOrCreate("AABBCC")
 		assert.NoError(t, err)
+		postJSON(t, "/v1/state/AABBCC", `{"addresses": ["ffff::1"]}`)
+		dev, err = reg.GetOrCreate("AABBCC")
+		assert.NoError(t, err)
+		assert.Equal(t, dev, device_registry.Device{State: device_registry.State{addr}})
 
-		dev.Addresses = addr
-		assert.Equal(t, dev, dev2)
+		postJSON(t, "/v1/state/AABBCC", `{}`)
+		dev, err = reg.GetOrCreate("AABBCC")
+		assert.NoError(t, err)
+		assert.Equal(t, dev, device_registry.Device{})
+
 		done <- 1
 	})
 }
