@@ -9,13 +9,13 @@ import (
 	"testing"
 )
 
-func initializeDevicesBucket(db *bolt.DB) error {
+func initializeBucket(db *bolt.DB, bucketName string) error {
 	return db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte("Devices"))
+		_, err := tx.CreateBucketIfNotExists([]byte(bucketName))
 		if err != nil {
 			return errors.WithStack(err)
 		}
-		log.Info("Initialized bucket Devices")
+		log.Infof("Initialized bucket %v", bucketName)
 		return nil
 	})
 }

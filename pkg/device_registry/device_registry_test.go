@@ -8,39 +8,83 @@ import (
 )
 
 var ip = net.ParseIP("ffff::1")
-var addr = []DeviceAddress{{ip, false}}
 
 func TestRegistry_CRUD(t *testing.T) {
 	reg := CreateTestRegistry(t)
+
+	defaults, err := reg.GetDefaults("12345")
+	require.NoError(t, err)
+	assert.Equal(t, (*Defaults)(nil), defaults)
 
 	dev, err := reg.GetOrCreate("12345")
 	require.NoError(t, err)
 	assert.Equal(t, Device{}, dev)
 
-	d := update(t, reg, "12345", Device{"D100", -4, 5000, addr})
+	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", -4, 500})
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
-	assert.Equal(t, d, dev)
+	assert.Equal(t, Device{Defaults: expectedDefaults}, dev)
 
-	err = reg.Delete("12345")
+	defaults, err = reg.GetDefaults("12345")
+	require.NoError(t, err)
+	assert.Equal(t, &expectedDefaults, defaults)
+
+	expectedState := updateState(t, reg, "12345", State{[]net.IP{ip}})
+
+	dev, err = reg.GetOrCreate("12345")
+	require.NoError(t, err)
+	assert.Equal(t, Device{Defaults: expectedDefaults, State: expectedState}, dev)
+
+	expectedConfig := updateConfig(t, reg, "12345", Config{ip})
+
+	dev, err = reg.GetOrCreate("12345")
+	require.NoError(t, err)
+	assert.Equal(t, Device{expectedDefaults, expectedState, expectedConfig}, dev)
+
+	err = reg.DeleteDevice("12345")
 	require.NoError(t, err)
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
 	assert.Equal(t, Device{}, dev) // Should create new empty Device here
 
-	err = reg.UpdateAddresses("12345", []net.IP{ip})
+	// Updating defaults of non-exising device should create it
+	expectedDefaults = updateDefaults(t, reg, "AABBCC", Defaults{"D100", -4, 500})
+
+	dev, err = reg.GetOrCreate("AABBCC")
+	require.NoError(t, err)
+	assert.Equal(t, Device{Defaults: expectedDefaults}, dev)
+
+	err = reg.DeleteDevice("AABBCC")
 	require.NoError(t, err)
 
-	dev, err = reg.GetOrCreate("12345")
-	require.NoError(t, err)
-	assert.Equal(t, Device{Addresses: addr}, dev)
+	// Updating state of non-exising device should create it
+	expectedState = updateState(t, reg, "AABBCC", State{[]net.IP{ip}})
 
-	err = reg.UpdateAddresses("12345", []net.IP{})
+	dev, err = reg.GetOrCreate("AABBCC")
+	require.NoError(t, err)
+	assert.Equal(t, Device{State: expectedState}, dev)
+
+	_ = updateState(t, reg, "AABBCC", State{})
+
+	dev, err = reg.GetOrCreate("AABBCC")
+	require.NoError(t, err)
+	assert.Equal(t, Device{}, dev)
+
+	err = reg.DeleteDevice("AABBCC")
 	require.NoError(t, err)
 
-	dev, err = reg.GetOrCreate("12345")
+	// Updating config of non-exising device should create it
+	expectedConfig = updateConfig(t, reg, "AABBCC", Config{ip})
+
+	dev, err = reg.GetOrCreate("AABBCC")
+	require.NoError(t, err)
+	assert.Equal(t, Device{Config: expectedConfig}, dev)
+
+	_ = updateConfig(t, reg, "AABBCC", Config{})
+
+	dev, err = reg.GetOrCreate("AABBCC")
 	require.NoError(t, err)
 	assert.Equal(t, Device{}, dev)
 }
@@ -51,39 +95,49 @@ func TestRegistry_GetAll(t *testing.T) {
 	expected := map[string]Device{}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expected["12345"] = update(t, reg, "12345", Device{"D100", -4, 5000, addr})
+	_, err := reg.GetOrCreate("EMPTY")
+	assert.NoError(t, err)
+	expected["EMPTY"] = Device{}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expected["AABBCCDD"] = update(t, reg, "AABBCCDD", Device{"D100", -4, 5000, nil})
+	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", -4, 5000})
+	expected["12345"] = Device{Defaults: expectedDefaults}
+	assert.Equal(t, expected, getAll(t, reg))
+
+	expectedState := updateState(t, reg, "AABBCC", State{[]net.IP{ip}})
+	expected["AABBCC"] = Device{State: expectedState}
+	assert.Equal(t, expected, getAll(t, reg))
+
+	expectedState = updateState(t, reg, "12345", State{[]net.IP{ip}})
+	expected["12345"] = Device{Defaults: expectedDefaults, State: expectedState}
+	assert.Equal(t, expected, getAll(t, reg))
+
+	err = reg.DeleteDevice("12345")
+	assert.NoError(t, err)
+	delete(expected, "12345")
 	assert.Equal(t, expected, getAll(t, reg))
 }
 
-func TestRegistry_Get(t *testing.T) {
-	reg := CreateTestRegistry(t)
-
-	assert.Equal(t, (*Device)(nil), get(t, reg, "12345"))
-
-	dev1 := update(t, reg, "12345", Device{"D100", -4, 5000, addr})
-	assert.Equal(t, &dev1, get(t, reg, "12345"))
-
-	dev2 := update(t, reg, "AABBCCDD", Device{"D100", -4, 5000, nil})
-	assert.Equal(t, &dev2, get(t, reg, "AABBCCDD"))
-}
-
-func update(t *testing.T, reg *Registry, id string, d Device) Device {
-	err := reg.Update(id, d)
+func updateDefaults(t *testing.T, reg *Registry, id string, d Defaults) Defaults {
+	err := reg.UpdateDefaults(id, d)
 	require.NoError(t, err)
 	return d
 }
 
-func getAll(t *testing.T, reg *Registry) map[string]Device {
-	devices, err := reg.GetAll()
+func updateState(t *testing.T, reg *Registry, id string, state State) State {
+	err := reg.UpdateState(id, state)
 	require.NoError(t, err)
-	return devices
+	return state
 }
 
-func get(t *testing.T, reg *Registry, id string) *Device {
-	device, err := reg.Get(id)
+func updateConfig(t *testing.T, reg *Registry, id string, config Config) Config {
+	err := reg.UpdateConfig(id, config)
 	require.NoError(t, err)
-	return device
+	return config
+}
+
+func getAll(t *testing.T, reg *Registry) map[string]Device {
+	devices, err := reg.GetDevices()
+	require.NoError(t, err)
+	return devices
 }
