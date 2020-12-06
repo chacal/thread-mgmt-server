@@ -34,16 +34,16 @@ func (m *MockDeviceGateway) EXPECT() *MockDeviceGatewayMockRecorder {
 	return m.recorder
 }
 
-// PushSettings mocks base method
-func (m *MockDeviceGateway) PushSettings(arg0 device_registry.Device, arg1 net.IP) error {
+// PushDefaults mocks base method
+func (m *MockDeviceGateway) PushDefaults(arg0 device_registry.Defaults, arg1 net.IP) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PushSettings", arg0, arg1)
+	ret := m.ctrl.Call(m, "PushDefaults", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// PushSettings indicates an expected call of PushSettings
-func (mr *MockDeviceGatewayMockRecorder) PushSettings(arg0, arg1 interface{}) *gomock.Call {
+// PushDefaults indicates an expected call of PushDefaults
+func (mr *MockDeviceGatewayMockRecorder) PushDefaults(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushSettings", reflect.TypeOf((*MockDeviceGateway)(nil).PushSettings), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushDefaults", reflect.TypeOf((*MockDeviceGateway)(nil).PushDefaults), arg0, arg1)
 }

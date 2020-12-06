@@ -17,11 +17,11 @@ var LOCAL_IP = gonet.ParseIP("127.0.0.1")
 
 func TestGateway_PushSettings(t *testing.T) {
 	testWithCoapServer(t, func(t *testing.T, r *mux.Router, done chan int) {
-		assertJSONPost(t, r, "api/settings", `{"instance": "D100","txPower": -4,"pollPeriod": 5000}`)
+		expectJSONPost(t, r, "api/settings", `{"instance": "D100","txPower": -4,"pollPeriod": 5000}`)
 
 		gw := Create()
-		dev := device_registry.Device{"D100", -4, 5000, []device_registry.DeviceAddress{{LOCAL_IP, false}}}
-		err := gw.PushSettings(dev, LOCAL_IP)
+		dev := device_registry.Defaults{"D100", -4, 5000}
+		err := gw.PushDefaults(dev, LOCAL_IP)
 		assert.NoError(t, err)
 		done <- 1
 	})
@@ -50,7 +50,7 @@ func testWithCoapServer(t *testing.T, testFunc func(t *testing.T, r *mux.Router,
 	<-testDone
 }
 
-func assertJSONPost(t *testing.T, r *mux.Router, path string, body string) {
+func expectJSONPost(t *testing.T, r *mux.Router, path string, body string) {
 	_ = r.Handle(path, mux.HandlerFunc(func(w mux.ResponseWriter, msg *mux.Message) {
 		assert.Equal(t, codes.POST, msg.Code)
 		p, _ := msg.Options.Path()
