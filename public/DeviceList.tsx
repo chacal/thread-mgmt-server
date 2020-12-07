@@ -8,16 +8,24 @@ interface Devices {
   [key: string]: Device
 }
 
-export interface DeviceAddress {
-  ip: string
-  main: boolean
-}
-
-export interface Device {
+export interface DeviceDefaults {
   instance?: string
   txPower?: number
   pollPeriod?: number
-  addresses?: DeviceAddress[]
+}
+
+export interface DeviceState {
+  addresses?: string[]
+}
+
+export interface DeviceConfig {
+  mainIp?: string
+}
+
+export interface Device {
+  defaults: DeviceDefaults
+  state: DeviceState
+  config: DeviceConfig
 }
 
 export default function DeviceList() {
@@ -43,11 +51,11 @@ export default function DeviceList() {
   )
 }
 
-function loadDevices() {
+function loadDevices(): Promise<Devices> {
   return fetch(`/v1/devices`)
     .then(res => res.json())
 }
 
 function sortedDevices(devs: Devices) {
-  return sortBy(toPairs(devs), ([id, d]) => d.instance, ([id, d]) => id)
+  return sortBy(toPairs(devs), ([id, d]) => d.defaults.instance, ([id, d]) => id)
 }
