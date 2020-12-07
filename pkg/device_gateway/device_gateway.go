@@ -16,7 +16,7 @@ import (
 var DEVICE_COAP_PORT = "5683"
 
 type DeviceGateway interface {
-	PushSettings(device device_registry.Device, destination net.IP) error
+	PushDefaults(defaults device_registry.Defaults, destination net.IP) error
 }
 
 type deviceGateway struct{}
@@ -25,13 +25,12 @@ func Create() *deviceGateway {
 	return &deviceGateway{}
 }
 
-func (r *deviceGateway) PushSettings(d device_registry.Device, destination net.IP) error {
-	log.Debugf("Pushing settings %+v to %+v", d, destination)
+func (r *deviceGateway) PushDefaults(defaults device_registry.Defaults, destination net.IP) error {
+	log.Debugf("Pushing settings %+v to %+v", defaults, destination)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	d.Addresses = []device_registry.DeviceAddress{} // Don't send IP addresses as device doesn't need them
-	payload, err := json.Marshal(d)
+	payload, err := json.Marshal(defaults)
 	if err != nil {
 		return errors.WithStack(err)
 	}

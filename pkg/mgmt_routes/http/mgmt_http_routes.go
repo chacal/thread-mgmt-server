@@ -18,9 +18,9 @@ func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry, gw device
 	router.Use(errorHandlingMiddleware)
 	router.Use(cors.Default())
 	router.GET("/v1/devices", handlerWithDeps(reg, gw, getV1Devices))
-	router.POST("/v1/devices/:device_id", handlerWithDeps(reg, gw, postV1Devices))
+	router.POST("/v1/devices/:device_id/defaults", handlerWithDeps(reg, gw, postV1Defaults))
+	router.POST("/v1/devices/:device_id/push", handlerWithDeps(reg, gw, postV1DevicesPushDefaults))
 	router.DELETE("/v1/devices/:device_id", handlerWithDeps(reg, gw, deleteV1Devices))
-	router.POST("/v1/devices/:device_id/push", handlerWithDeps(reg, gw, postV1DevicesPush))
 	return serveStaticFromDir(router, "dist")
 }
 
@@ -29,7 +29,7 @@ type Id struct {
 }
 
 func getV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
-	devices, err := reg.GetAll()
+	devices, err := reg.GetDevices()
 	if err != nil {
 		ctx.Error(err)
 		return
@@ -37,20 +37,20 @@ func getV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGateway
 	ctx.IndentedJSON(http.StatusOK, devices)
 }
 
-func postV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+func postV1Defaults(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
 	var id Id
 	if err := ctx.ShouldBindUri(&id); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
 		return
 	}
 
-	var dev device_registry.Device
-	if err := ctx.ShouldBindJSON(&dev); err != nil {
+	var defaults device_registry.Defaults
+	if err := ctx.ShouldBindJSON(&defaults); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
 		return
 	}
 
-	err := reg.Update(id.Id, dev)
+	err := reg.UpdateDefaults(id.Id, defaults)
 	if err != nil {
 		ctx.Error(errors.WithStack(err))
 		return
@@ -66,7 +66,7 @@ func deleteV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGate
 		return
 	}
 
-	err := reg.Delete(id.Id)
+	err := reg.DeleteDevice(id.Id)
 	if err != nil {
 		ctx.Error(errors.WithStack(err))
 		return
@@ -79,7 +79,7 @@ type PushDestination struct {
 	Address net.IP `json:"address" binding:"required"`
 }
 
-func postV1DevicesPush(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+func postV1DevicesPushDefaults(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
 	var id Id
 	if err := ctx.ShouldBindUri(&id); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
@@ -92,14 +92,14 @@ func postV1DevicesPush(reg *device_registry.Registry, gw device_gateway.DeviceGa
 		return
 	}
 
-	dev, err := reg.Get(id.Id)
+	defaults, err := reg.GetDefaults(id.Id)
 	if err != nil {
 		ctx.Error(errors.WithStack(err))
 		return
 	}
 
-	if dev != nil {
-		err = gw.PushSettings(*dev, dst.Address)
+	if defaults != nil {
+		err = gw.PushDefaults(*defaults, dst.Address)
 		if err != nil {
 			ctx.Error(errors.WithStack(err))
 		} else {

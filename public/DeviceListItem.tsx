@@ -1,7 +1,7 @@
 import React from 'react'
-import { Device, DeviceAddress } from './DeviceList'
+import { Device, DeviceDefaults } from './DeviceList'
 import { makeStyles } from '@material-ui/core/styles'
-import DeviceSettingsPanel, { DeviceSettings } from './DeviceSettingsPanel'
+import DeviceDefaultsPanel from './DeviceSettingsPanel'
 import Grid from '@material-ui/core/Grid'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
@@ -17,38 +17,21 @@ const useStyles = makeStyles((theme) => ({
 export default function DeviceListItem(props: { deviceId: string, device: Device, deviceSaved: (id: string, dev: Device) => void }) {
   const classes = useStyles()
 
-  const onSaveDevice = (dev: Device) => {
-    return postJSON('/v1/devices/' + props.deviceId, dev)
+  const onSaveDefaults = (defaults: DeviceDefaults) => {
+    const dev = { ...props.device, defaults }
+    return postJSON('/v1/devices/' + props.deviceId + "/defaults", defaults)
       .then(() => props.deviceSaved(props.deviceId, dev))
-  }
-
-  const onSaveSettings = (s: DeviceSettings) => {
-    const d = { ...props.device, ...s }
-    return onSaveDevice(d)
-  }
-
-  const onSaveAddresses = (addr: DeviceAddress[]) => {
-    const d = { ...props.device, addresses: addr }
-    return onSaveDevice(d)
   }
 
   return <Grid item xs={12}>
     <Paper>
       <Grid container spacing={5} className={classes.root}>
-        <TitleRow deviceId={props.deviceId} instance={props.device.instance}/>
-        <IPAddressesPanel addresses={props.device.addresses} onSaveAddresses={onSaveAddresses}/>
-        <DeviceSettingsPanel settings={settingsFor(props.device)} onSaveSettings={onSaveSettings}/>
+        <TitleRow deviceId={props.deviceId} instance={props.device.defaults.instance}/>
+        <IPAddressesPanel addresses={props.device.state.addresses}/>
+        <DeviceDefaultsPanel defaults={props.device.defaults} onSaveDefaults={onSaveDefaults}/>
       </Grid>
     </Paper>
   </Grid>
-}
-
-function settingsFor(d: Device): DeviceSettings {
-  return {
-    instance: d.instance,
-    txPower: d.txPower,
-    pollPeriod: d.pollPeriod
-  }
 }
 
 function TitleRow(props: { deviceId: string, instance?: string }) {
