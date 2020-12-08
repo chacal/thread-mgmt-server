@@ -5,7 +5,8 @@ import DeviceDefaultsPanel from './DeviceDefaultsPanel'
 import Grid from '@material-ui/core/Grid'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
-import IPAddressesPanel from './IPAddressesPanel'
+import StateItem from './StateItem'
+import DeviceStatePanel from './DeviceStatePanel'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -22,7 +23,7 @@ export default function DeviceListItem(props: { deviceId: string, device: Device
 
   const onSaveDefaults = (defaults: DeviceDefaults) => {
     const dev = { ...props.device, defaults }
-    return postJSON('/v1/devices/' + props.deviceId + "/defaults", defaults)
+    return postJSON('/v1/devices/' + props.deviceId + '/defaults', defaults)
       .then(() => props.deviceSaved(props.deviceId, dev))
   }
 
@@ -30,7 +31,7 @@ export default function DeviceListItem(props: { deviceId: string, device: Device
     <Paper>
       <Grid container spacing={5} className={classes.root}>
         <TitleRow deviceId={props.deviceId} instance={props.device.defaults.instance}/>
-        <IPAddressesPanel addresses={props.device.state.addresses}/>
+        <DeviceStatePanel state={props.device.state}/>
         <DeviceDefaultsPanel defaults={props.device.defaults} onSaveDefaults={onSaveDefaults}/>
       </Grid>
     </Paper>
