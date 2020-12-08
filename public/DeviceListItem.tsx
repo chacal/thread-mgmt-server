@@ -11,6 +11,9 @@ const useStyles = makeStyles((theme) => ({
   root: {
     padding: theme.spacing(2),
     paddingLeft: theme.spacing(4),
+  },
+  deviceId: {
+    marginLeft: theme.spacing(2)
   }
 }))
 
@@ -35,17 +38,15 @@ export default function DeviceListItem(props: { deviceId: string, device: Device
 }
 
 function TitleRow(props: { deviceId: string, instance?: string }) {
+  const classes = useStyles()
+
   return <Grid item container alignItems={'flex-end'}>
-    <Grid item xs={3} md={1}>
-      <Typography variant={'h5'} color={'primary'}>
-        {props.instance ? props.instance : 'N/A'}
-      </Typography>
-    </Grid>
-    <Grid item xs={2} md={1}>
-      <Typography variant={'subtitle1'} color={'textSecondary'}>
-        {props.deviceId}
-      </Typography>
-    </Grid>
+    <Typography variant={'h5'} color={'primary'} display={'inline'}>
+      {props.instance ? props.instance : 'N/A'}
+    </Typography>
+    <Typography variant={'subtitle1'} color={'textSecondary'} display={'inline'} className={classes.deviceId}>
+      {props.deviceId}
+    </Typography>
   </Grid>
 }
 
