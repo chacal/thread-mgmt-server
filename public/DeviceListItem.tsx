@@ -1,7 +1,7 @@
 import React from 'react'
 import { Device, DeviceDefaults } from './DeviceList'
 import { makeStyles } from '@material-ui/core/styles'
-import DeviceDefaultsPanel from './DeviceSettingsPanel'
+import DeviceDefaultsPanel from './DeviceDefaultsPanel'
 import Grid from '@material-ui/core/Grid'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'

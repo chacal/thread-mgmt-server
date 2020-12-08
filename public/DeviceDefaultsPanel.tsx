@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-export default function DeviceSettingsPanel(props: { defaults: DeviceDefaults, onSaveDefaults: (s: DeviceDefaults) => Promise<void> }) {
+export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, onSaveDefaults: (s: DeviceDefaults) => Promise<void> }) {
   const classes = useStyles()
 
   const [defaults, setDefaults] = useState(props.defaults)
@@ -67,7 +67,7 @@ export default function DeviceSettingsPanel(props: { defaults: DeviceDefaults, o
 
   const isSaveDisabled = () => pollError || instanceError || isEqual(defaults, props.defaults)
 
-  return <SubPanel heading={'Settings'}>
+  return <SubPanel heading={'Defaults'}>
     <Grid item container spacing={3} className={classes.settingsPanelRow}>
       <Grid item xs={4} sm={3} md={4} lg={3}>
         <InstanceTextField instance={defaults.instance} onInstanceChange={onInstanceChange}/>
