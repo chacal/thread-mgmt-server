@@ -13,11 +13,17 @@ import MenuItem from '@material-ui/core/MenuItem'
 import isEqual from 'lodash/isEqual'
 import ErrorMessage from './ErrorMessage'
 import { DeviceDefaults } from './DeviceList'
-import FormHelperText from '@material-ui/core/FormHelperText'
+import InputAdornment from '@material-ui/core/InputAdornment'
 
 const useStyles = makeStyles((theme) => ({
   settingsPanelRow: {
     marginBottom: theme.spacing(1)
+  },
+  txPowerSelectAdornment: {
+    position: 'absolute',
+    padding: 0,
+    right: '16px',
+    top: 'calc(50%)',
   }
 }))
 
@@ -97,14 +103,27 @@ function InstanceTextField(props: { instance?: string, onInstanceChange: (instan
     props.onInstanceChange(v, hasError)
   }
 
-  return <TextField label="Instance" error={err} value={props.instance ? props.instance : ''} onChange={onChange}/>
+  return <TextField
+    label="Instance"
+    error={err}
+    value={props.instance ? props.instance : ''}
+    onChange={onChange}
+    InputLabelProps={{ shrink: true }}
+  />
 }
 
 function TxPowerSelect(props: { txPower?: number, onTxPowerSelected: SelectInputProps['onChange'] }) {
+  const classes = useStyles()
+
   return <FormControl fullWidth>
-    <InputLabel id="txpower-label">TX Power</InputLabel>
-    <Select labelId="txpower-label" value={props.txPower !== undefined ? props.txPower : ''}
-            onChange={props.onTxPowerSelected}>
+    <InputLabel shrink={true} id="txpower-label">TX Power</InputLabel>
+    <Select labelId="txpower-label"
+            value={props.txPower !== undefined ? props.txPower : ''}
+            onChange={props.onTxPowerSelected}
+            endAdornment={
+              <InputAdornment position="start" className={classes.txPowerSelectAdornment}>dBm</InputAdornment>
+            }
+    >
       <MenuItem value={8}>8</MenuItem>
       <MenuItem value={4}>4</MenuItem>
       <MenuItem value={0}>0</MenuItem>
@@ -114,7 +133,6 @@ function TxPowerSelect(props: { txPower?: number, onTxPowerSelected: SelectInput
       <MenuItem value={-16}>-16</MenuItem>
       <MenuItem value={-20}>-20</MenuItem>
     </Select>
-    <FormHelperText>dBm</FormHelperText>
   </FormControl>
 }
 
@@ -138,7 +156,13 @@ function PollPeriodAutoComplete(props: { pollPeriod?: number, onPollPeriodChange
     onInputChange={onInputChange}
     filterOptions={(opts, state) => opts}
     renderInput={(params) => (
-      <TextField {...params} error={err} label="Poll Period" helperText="ms"/>
+      <TextField
+        {...params}
+        error={err}
+        label="Poll Period"
+        InputProps={{ endAdornment: <InputAdornment position="end">ms</InputAdornment> }}
+        InputLabelProps={{ shrink: true }}
+      />
     )}
   />
 }
