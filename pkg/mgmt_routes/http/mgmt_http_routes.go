@@ -19,6 +19,7 @@ func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry, gw device
 	router.Use(cors.Default())
 	router.GET("/v1/devices", handlerWithDeps(reg, gw, getV1Devices))
 	router.POST("/v1/devices/:device_id/defaults", handlerWithDeps(reg, gw, postV1Defaults))
+	router.POST("/v1/devices/:device_id/config", handlerWithDeps(reg, gw, postV1Config))
 	router.POST("/v1/devices/:device_id/push", handlerWithDeps(reg, gw, postV1DevicesPushDefaults))
 	router.DELETE("/v1/devices/:device_id", handlerWithDeps(reg, gw, deleteV1Devices))
 	return serveStaticFromDir(router, "dist")
@@ -51,6 +52,28 @@ func postV1Defaults(reg *device_registry.Registry, gw device_gateway.DeviceGatew
 	}
 
 	err := reg.UpdateDefaults(id.Id, defaults)
+	if err != nil {
+		ctx.Error(errors.WithStack(err))
+		return
+	}
+
+	ctx.Status(http.StatusOK)
+}
+
+func postV1Config(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+	var id Id
+	if err := ctx.ShouldBindUri(&id); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
+		return
+	}
+
+	var config device_registry.Config
+	if err := ctx.ShouldBindJSON(&config); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
+		return
+	}
+
+	err := reg.UpdateConfig(id.Id, config)
 	if err != nil {
 		ctx.Error(errors.WithStack(err))
 		return

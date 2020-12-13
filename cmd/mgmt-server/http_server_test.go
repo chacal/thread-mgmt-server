@@ -15,6 +15,7 @@ import (
 )
 
 var ip = net.ParseIP("ffff::1")
+var ip2 = net.ParseIP("ffff::2")
 var addr = []net.IP{ip}
 
 func TestV1GetDevices(t *testing.T) {
@@ -73,7 +74,7 @@ func TestV1PostDefaults(t *testing.T) {
 		payload  string
 		expected device_registry.Defaults
 	}{
-		"no addresses": {
+		"default": {
 			"12345",
 			`{"instance": "D100", "txPower": -4, "pollPeriod": 5000}`,
 			device_registry.Defaults{"D100", -4, 5000},
@@ -96,6 +97,42 @@ func TestV1PostDefaults(t *testing.T) {
 			defaults, err := reg.GetDefaults(tc.id)
 			require.NoError(t, err)
 			assert.Equal(t, &tc.expected, defaults)
+		})
+	}
+}
+
+func TestV1PostConfig(t *testing.T) {
+	router, reg := setup(t)
+	tests := map[string]struct {
+		id       string
+		payload  string
+		expected device_registry.Config
+	}{
+		"default": {
+			"12345",
+			`{"mainIp": "ffff::1"}`,
+			device_registry.Config{ip},
+		},
+		"replaces previous value": {
+			"12345",
+			`{"mainIp": "ffff::2"}`,
+			device_registry.Config{ip2},
+		},
+		"empty config": {
+			"12345",
+			`{}`,
+			device_registry.Config{},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			T.AssertOK(t, T.RecordPost(router, "/v1/devices/"+tc.id+"/config", tc.payload))
+			devices, err := reg.GetDevices()
+			require.NoError(t, err)
+			config := devices[tc.id].Config
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, config)
 		})
 	}
 }
