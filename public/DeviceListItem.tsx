@@ -1,12 +1,12 @@
 import React from 'react'
-import { Device, DeviceDefaults } from './DeviceList'
+import { Device, DeviceConfig, DeviceDefaults } from './DeviceList'
 import { makeStyles } from '@material-ui/core/styles'
 import DeviceDefaultsPanel from './DeviceDefaultsPanel'
 import Grid from '@material-ui/core/Grid'
 import Paper from '@material-ui/core/Paper'
 import Typography from '@material-ui/core/Typography'
-import StateItem from './StateItem'
 import DeviceStatePanel from './DeviceStatePanel'
+import DeviceConfigPanel from './DeviceConfigPanel'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -27,12 +27,19 @@ export default function DeviceListItem(props: { deviceId: string, device: Device
       .then(() => props.deviceSaved(props.deviceId, dev))
   }
 
+  const onSaveConfig = (config: DeviceConfig) => {
+    const dev = { ...props.device, config }
+    return postJSON('/v1/devices/' + props.deviceId + '/config', config)
+      .then(() => props.deviceSaved(props.deviceId, dev))
+  }
+
   return <Grid item xs={12}>
     <Paper>
       <Grid container spacing={5} className={classes.root}>
         <TitleRow deviceId={props.deviceId} instance={props.device.defaults.instance}/>
         <DeviceStatePanel state={props.device.state}/>
         <DeviceDefaultsPanel defaults={props.device.defaults} onSaveDefaults={onSaveDefaults}/>
+        <DeviceConfigPanel config={props.device.config} state={props.device.state} onSaveConfig={onSaveConfig}/>
       </Grid>
     </Paper>
   </Grid>
