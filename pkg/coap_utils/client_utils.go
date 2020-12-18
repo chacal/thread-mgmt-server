@@ -45,6 +45,8 @@ func PostJSON(ctx context.Context, url string, path string, payload string) (str
 	switch resp.Code() {
 	case codes.Empty:
 		return "", nil
+	case codes.Changed:
+		return "", nil
 	case codes.Content:
 		body, err := resp.ReadBody()
 		if err != nil {

@@ -51,7 +51,7 @@ func postV1State(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Mes
 		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
 	}
 
-	coap_utils.RespondWithEmpty(w)
+	coap_utils.RespondWithChanged(w)
 }
 
 func handlerWithReg(reg *device_registry.Registry, f func(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message)) mux.Handler {

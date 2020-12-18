@@ -52,6 +52,10 @@ func RespondWithEmpty(w mux.ResponseWriter) {
 	setResponse(w, codes.Empty, message.TextPlain, nil)
 }
 
+func RespondWithChanged(w mux.ResponseWriter) {
+	setResponse(w, codes.Changed, message.TextPlain, nil)
+}
+
 func GetLastPathPart(r *mux.Message) (string, error) {
 	path, err := r.Message.Options.Path()
 	if err != nil {
