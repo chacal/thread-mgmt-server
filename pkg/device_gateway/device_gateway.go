@@ -35,6 +35,6 @@ func (r *deviceGateway) PushDefaults(defaults device_registry.Defaults, destinat
 		return errors.WithStack(err)
 	}
 
-	_, err = coap_utils.PostJSON(ctx, destination.String()+":"+DEVICE_COAP_PORT, "api/settings", string(payload))
+	_, err = coap_utils.PostJSON(ctx, "["+destination.String()+"]:"+DEVICE_COAP_PORT, "api/settings", string(payload))
 	return err
 }
