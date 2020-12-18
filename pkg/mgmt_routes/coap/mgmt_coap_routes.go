@@ -13,6 +13,7 @@ func RegisterRoutes(router *mux.Router, reg *device_registry.Registry) {
 	router.Use(coap_utils.LoggingMiddleware)
 	router.Handle("v1/defaults/", handlerWithReg(reg, getV1Defaults))
 	router.Handle("v1/state/", handlerWithReg(reg, postV1State))
+	router.DefaultHandle(mux.HandlerFunc(defaultHandler))
 }
 
 func getV1Defaults(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message) {
@@ -52,6 +53,10 @@ func postV1State(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Mes
 	}
 
 	coap_utils.RespondWithChanged(w)
+}
+
+func defaultHandler(w mux.ResponseWriter, r *mux.Message) {
+	coap_utils.RespondWithNotFound(w)
 }
 
 func handlerWithReg(reg *device_registry.Registry, f func(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message)) mux.Handler {

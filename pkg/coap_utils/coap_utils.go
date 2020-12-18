@@ -56,6 +56,10 @@ func RespondWithChanged(w mux.ResponseWriter) {
 	setResponse(w, codes.Changed, message.TextPlain, nil)
 }
 
+func RespondWithNotFound(w mux.ResponseWriter) {
+	setResponse(w, codes.NotFound, message.TextPlain, nil)
+}
+
 func GetLastPathPart(r *mux.Message) (string, error) {
 	path, err := r.Message.Options.Path()
 	if err != nil {
