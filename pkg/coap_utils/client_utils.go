@@ -9,7 +9,10 @@ import (
 	"github.com/plgd-dev/go-coap/v2/udp/client"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
 	"strings"
+	"time"
 )
+
+const RequestAckTimeout = 20 * time.Second
 
 func GetJSON(ctx context.Context, url string, path string) (string, error) {
 	resp, err := executeRequest(url, path, func() (*pool.Message, error) {
@@ -54,7 +57,7 @@ func PostJSON(ctx context.Context, url string, path string, payload string) (str
 }
 
 func executeRequest(url string, path string, reqCreator func() (*pool.Message, error)) (*pool.Message, error) {
-	conn, err := udp.Dial(url, udp.WithKeepAlive(nil))
+	conn, err := udp.Dial(url, udp.WithKeepAlive(nil), udp.WithTransmission(time.Second, RequestAckTimeout, 5))
 	if err != nil {
 		return nil, errors.Wrapf(err, "couldn't dial to url %v", url)
 	}
