@@ -14,9 +14,19 @@ export interface DeviceDefaults {
   pollPeriod?: number
 }
 
+interface ParentInfo {
+  rloc16: string
+  linkQualityIn: number
+  linkQualityOut: number
+  avgRssi: number
+  latestRssi: number
+}
+
 export interface DeviceState {
   addresses?: string[]
-  vcc: number
+  vcc?: number
+  instance?: string
+  parent?: ParentInfo
 }
 
 export interface DeviceConfig {

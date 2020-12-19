@@ -10,21 +10,28 @@ const useStyles = makeStyles((theme) => ({
 }))
 
 
-export default function StateItem(props: { heading: string, values?: string[] }) {
+export default function StateItem(props: { heading: string, values?: string[] | string }) {
   const classes = useStyles()
 
   return <Grid item container>
     <Grid item className={classes.heading}>
-      <Typography variant={'caption'} color={'textSecondary'} >{props.heading}</Typography>
+      <Typography variant={'caption'} color={'textSecondary'}>{props.heading}</Typography>
     </Grid>
     <Grid container item>
-      {props.values ? props.values.map(val =>
-        <Grid item key={val} xs={12}>
-          <Typography variant={'body2'}>{val}</Typography>
-        </Grid>
-      ) : null
-      }
-      &nbsp;
+      {renderValues(props.values)}&nbsp;
     </Grid>
   </Grid>
+}
+
+function renderValues(values?: string[] | string) {
+  if (values === undefined) {
+    return null
+  } else {
+    const vals = Array.isArray(values) ? values : [values]
+    return vals.map(val =>
+      <Grid item key={val} xs={12}>
+        <Typography variant={'body2'}>{val}</Typography>
+      </Grid>
+    )
+  }
 }

@@ -31,8 +31,31 @@ export default function DeviceStatePanel(props: DeviceStatePanelProps) {
   const isRefreshDisabled = () => props.mainIp === undefined
 
   return <SubPanel heading={'State'}>
-    <StateItem heading={'Addresses'} values={props.state.addresses}/>
-    <StateItem heading={'Voltage'} values={[voltageString(props.state)]}/>
+    <Grid item container xs={12}>
+      <Grid item xs={4}>
+        <StateItem heading={'Instance'} values={props.state.instance}/>
+      </Grid>
+      <Grid item xs={4}>
+        <StateItem heading={'Voltage'} values={voltageString(props.state)}/>
+      </Grid>
+      <Grid item xs={4}>
+        <StateItem heading={'RLOC16'} values={props.state.parent?.rloc16}/>
+      </Grid>
+    </Grid>
+    <Grid item container xs={12}>
+      <Grid item xs={4}>
+        <StateItem heading={'Link Quality In/Out'} values={linkQualityString(props.state)}/>
+      </Grid>
+      <Grid item xs={4}>
+        <StateItem heading={'Latest RSSI'} values={rssiString(props.state.parent?.latestRssi)}/>
+      </Grid>
+      <Grid item xs={4}>
+        <StateItem heading={'Avg RSSI'} values={rssiString(props.state.parent?.avgRssi)}/>
+      </Grid>
+    </Grid>
+    <Grid item xs={12}>
+      <StateItem heading={'Addresses'} values={props.state.addresses}/>
+    </Grid>
     <Grid item container spacing={2} xs={12} alignItems={'center'}>
       <Grid item>
         <AsyncOperationButton disabled={isRefreshDisabled()} onClick={onClickRefresh}>Refresh</AsyncOperationButton>
@@ -45,5 +68,13 @@ export default function DeviceStatePanel(props: DeviceStatePanelProps) {
 }
 
 function voltageString(s: DeviceState) {
-  return s.vcc ? s.vcc / 1000 + ' V' : ''
+  return s.vcc !== undefined ? (s.vcc / 1000).toFixed(3) + ' V' : ''
+}
+
+function linkQualityString(s: DeviceState) {
+  return s.parent !== undefined ? `${s.parent.linkQualityIn}/${s.parent.linkQualityOut}` : ''
+}
+
+function rssiString(rssi: number | undefined) {
+  return rssi !== undefined ? `${rssi}dBm` : ''
 }
