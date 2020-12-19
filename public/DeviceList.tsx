@@ -16,6 +16,7 @@ export interface DeviceDefaults {
 
 export interface DeviceState {
   addresses?: string[]
+  vcc: number
 }
 
 export interface DeviceConfig {
@@ -36,7 +37,7 @@ export default function DeviceList() {
       .then(setDevices)
   }, [])
 
-  const deviceSaved = (deviceId: string, dev: Device) => {
+  const deviceChanged = (deviceId: string, dev: Device) => {
     setDevices(prev => ({ ...prev, [deviceId]: dev }))
   }
 
@@ -53,7 +54,7 @@ export default function DeviceList() {
         sortedDevices(devices)
           .map(([deviceId, device]) =>
             <DeviceListItem key={deviceId} deviceId={deviceId} device={device}
-                            deviceSaved={deviceSaved} deviceRemoved={deviceRemoved}/>)
+                            deviceChanged={deviceChanged} deviceRemoved={deviceRemoved}/>)
       }
     </Grid>
   )

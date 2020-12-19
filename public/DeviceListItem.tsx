@@ -1,5 +1,5 @@
 import React from 'react'
-import { Device, DeviceConfig, DeviceDefaults } from './DeviceList'
+import { Device, DeviceConfig, DeviceDefaults, DeviceState } from './DeviceList'
 import { makeStyles } from '@material-ui/core/styles'
 import DeviceDefaultsPanel from './DeviceDefaultsPanel'
 import Grid from '@material-ui/core/Grid'
@@ -17,7 +17,7 @@ const useStyles = makeStyles((theme) => ({
 interface DeviceListItemProps {
   deviceId: string,
   device: Device,
-  deviceSaved: (id: string, dev: Device) => void
+  deviceChanged: (id: string, dev: Device) => void
   deviceRemoved: (id: string) => void
 }
 
@@ -27,13 +27,18 @@ export default function DeviceListItem(props: DeviceListItemProps) {
   const onSaveDefaults = (defaults: DeviceDefaults) => {
     const dev = { ...props.device, defaults }
     return postJSON('/v1/devices/' + props.deviceId + '/defaults', defaults)
-      .then(() => props.deviceSaved(props.deviceId, dev))
+      .then(() => props.deviceChanged(props.deviceId, dev))
   }
 
   const onSaveConfig = (config: DeviceConfig) => {
     const dev = { ...props.device, config }
     return postJSON('/v1/devices/' + props.deviceId + '/config', config)
-      .then(() => props.deviceSaved(props.deviceId, dev))
+      .then(() => props.deviceChanged(props.deviceId, dev))
+  }
+
+  const onStateRefresh = (state: DeviceState) => {
+    const dev = { ...props.device, state }
+    props.deviceChanged(props.deviceId, dev)
   }
 
   return <Grid item xs={12}>
@@ -41,7 +46,8 @@ export default function DeviceListItem(props: DeviceListItemProps) {
       <Grid container spacing={5} className={classes.root}>
         <DeviceTitleRow deviceId={props.deviceId} instance={props.device.defaults.instance}
                         deviceRemoved={props.deviceRemoved}/>
-        <DeviceStatePanel state={props.device.state}/>
+        <DeviceStatePanel state={props.device.state} deviceId={props.deviceId}
+                          mainIp={props.device.config.mainIp} onStateRefresh={onStateRefresh}/>
         <DeviceDefaultsPanel defaults={props.device.defaults} deviceId={props.deviceId}
                              mainIp={props.device.config.mainIp} onSaveDefaults={onSaveDefaults}/>
         <DeviceConfigPanel config={props.device.config} state={props.device.state} onSaveConfig={onSaveConfig}/>

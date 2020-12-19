@@ -5,7 +5,7 @@ import { makeStyles } from '@material-ui/core/styles'
 
 const useStyles = makeStyles((theme) => ({
   heading: {
-    marginBottom: theme.spacing(0.5),
+    marginBottom: theme.spacing(0.2),
   },
 }))
 
@@ -24,6 +24,7 @@ export default function StateItem(props: { heading: string, values?: string[] })
         </Grid>
       ) : null
       }
+      &nbsp;
     </Grid>
   </Grid>
 }
