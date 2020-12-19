@@ -7,7 +7,7 @@ import MenuItem from '@material-ui/core/MenuItem'
 import FormControl from '@material-ui/core/FormControl'
 import Grid from '@material-ui/core/Grid'
 import AsyncOperationButton from './AsyncOperationButton'
-import ErrorMessage from './ErrorMessage'
+import StatusMessage, { EmptyStatus } from './StatusMessage'
 import isEqual from 'lodash/isEqual'
 import { makeStyles } from '@material-ui/core/styles'
 
@@ -21,16 +21,16 @@ export default function DeviceConfigPanel(props: { config: DeviceConfig, state: 
   const classes = useStyles()
 
   const [config, setConfig] = useState(props.config)
-  const [saveError, setSaveError] = useState('')
+  const [status, setStatus] = useState(EmptyStatus)
 
   const onMainIPSelected = (e: ChangeEvent<HTMLSelectElement>) => {
     setConfig({ ...config, mainIp: e.target.value })
   }
 
   const onClickSave = () => {
-    setSaveError('')
+    setStatus(EmptyStatus)
     return props.onSaveConfig(config)
-      .catch(err => setSaveError(err.toString()))
+      .catch(err => setStatus({ msg: err.toString(), isError: true, showProgress: false }))
   }
 
   const isSaveDisabled = () => isEqual(config, props.config)
@@ -54,10 +54,13 @@ export default function DeviceConfigPanel(props: { config: DeviceConfig, state: 
         </FormControl>
       </Grid>
     </Grid>
-    <Grid item xs={12} className={classes.configPanelRow}>
-      <AsyncOperationButton disabled={isSaveDisabled()} onClick={onClickSave}>Save</AsyncOperationButton>
-      <ErrorMessage msg={saveError}/>
+    <Grid item container spacing={2} xs={12}>
+      <Grid item>
+        <AsyncOperationButton disabled={isSaveDisabled()} onClick={onClickSave}>Save</AsyncOperationButton>
+      </Grid>
+    </Grid>
+    <Grid item xs={12}>
+      <StatusMessage {...status}/>
     </Grid>
   </SubPanel>
-
 }

@@ -38,7 +38,8 @@ export default function DeviceListItem(props: { deviceId: string, device: Device
       <Grid container spacing={5} className={classes.root}>
         <TitleRow deviceId={props.deviceId} instance={props.device.defaults.instance}/>
         <DeviceStatePanel state={props.device.state}/>
-        <DeviceDefaultsPanel defaults={props.device.defaults} onSaveDefaults={onSaveDefaults}/>
+        <DeviceDefaultsPanel defaults={props.device.defaults} deviceId={props.deviceId}
+                             mainIp={props.device.config.mainIp} onSaveDefaults={onSaveDefaults}/>
         <DeviceConfigPanel config={props.device.config} state={props.device.state} onSaveConfig={onSaveConfig}/>
       </Grid>
     </Paper>
@@ -59,7 +60,7 @@ function TitleRow(props: { deviceId: string, instance?: string }) {
 }
 
 
-function postJSON(url: string, data: any) {
+export function postJSON(url: string, data: any) {
   return fetch(url, {
     method: 'POST',
     body: JSON.stringify(data),

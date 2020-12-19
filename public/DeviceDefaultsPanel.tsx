@@ -11,12 +11,13 @@ import InputLabel from '@material-ui/core/InputLabel'
 import Select from '@material-ui/core/Select'
 import MenuItem from '@material-ui/core/MenuItem'
 import isEqual from 'lodash/isEqual'
-import ErrorMessage from './ErrorMessage'
+import StatusMessage, { EmptyStatus, Status } from './StatusMessage'
 import { DeviceDefaults } from './DeviceList'
 import InputAdornment from '@material-ui/core/InputAdornment'
+import { postJSON } from './DeviceListItem'
 
 const useStyles = makeStyles((theme) => ({
-  settingsPanelRow: {
+  defaultsPanelInputs: {
     marginBottom: theme.spacing(1)
   },
   txPowerSelectAdornment: {
@@ -27,13 +28,13 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, onSaveDefaults: (s: DeviceDefaults) => Promise<void> }) {
+export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, deviceId: string, mainIp: string | undefined, onSaveDefaults: (s: DeviceDefaults) => Promise<void> }) {
   const classes = useStyles()
 
   const [defaults, setDefaults] = useState(props.defaults)
   const [pollError, setPollError] = useState(false)
   const [instanceError, setInstanceError] = useState(false)
-  const [saveError, setSaveError] = useState('')
+  const [status, setStatus] = useState(EmptyStatus)
 
   const onInstanceChange = (instance: string, err: boolean) => {
     setInstanceError(err)
@@ -65,16 +66,26 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, o
     }
   }
 
+  const setErrorStatus = (err: any) => setStatus({ msg: err.toString(), isError: true, showProgress: false })
+
   const onClickSave = () => {
-    setSaveError('')
+    setStatus(EmptyStatus)
     return props.onSaveDefaults(defaults)
-      .catch(err => setSaveError(err.toString()))
+      .catch(setErrorStatus)
+  }
+
+  const onClickPush = () => {
+    setStatus({ msg: 'Pushing defaults..', isError: false, showProgress: true })
+    return postJSON('/v1/devices/' + props.deviceId + '/push', { address: props.mainIp })
+      .then(() => setStatus({ msg: 'Done', isError: false, showProgress: false }))
+      .catch(setErrorStatus)
   }
 
   const isSaveDisabled = () => pollError || instanceError || isEqual(defaults, props.defaults)
+  const isPushDisabled = () => props.mainIp === undefined || !isEqual(defaults, props.defaults)
 
   return <SubPanel heading={'Defaults'}>
-    <Grid item container spacing={3} className={classes.settingsPanelRow}>
+    <Grid item container spacing={3} className={classes.defaultsPanelInputs}>
       <Grid item xs={4} sm={3} md={4} lg={3}>
         <InstanceTextField instance={defaults.instance} onInstanceChange={onInstanceChange}/>
       </Grid>
@@ -85,9 +96,16 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, o
         <PollPeriodAutoComplete pollPeriod={defaults.pollPeriod} onPollPeriodChange={onPollPeriodChange}/>
       </Grid>
     </Grid>
-    <Grid item xs={12} className={classes.settingsPanelRow}>
-      <AsyncOperationButton disabled={isSaveDisabled()} onClick={onClickSave}>Save</AsyncOperationButton>
-      <ErrorMessage msg={saveError}/>
+    <Grid item container spacing={2} xs={12} alignItems={'center'}>
+      <Grid item>
+        <AsyncOperationButton disabled={isSaveDisabled()} onClick={onClickSave}>Save</AsyncOperationButton>
+      </Grid>
+      <Grid item>
+        <AsyncOperationButton disabled={isPushDisabled()} onClick={onClickPush}>Push</AsyncOperationButton>
+      </Grid>
+    </Grid>
+    <Grid item xs={12}>
+      <StatusMessage {...status}/>
     </Grid>
   </SubPanel>
 }
