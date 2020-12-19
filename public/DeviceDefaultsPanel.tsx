@@ -77,7 +77,7 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
   const onClickPush = () => {
     setStatus({ msg: 'Pushing defaults..', isError: false, showProgress: true })
     return postJSON('/v1/devices/' + props.deviceId + '/push', { address: props.mainIp })
-      .then(() => setStatus({ msg: 'Done', isError: false, showProgress: false }))
+      .then(() => setStatus(EmptyStatus))
       .catch(setErrorStatus)
   }
 
