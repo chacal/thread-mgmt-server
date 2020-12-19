@@ -45,7 +45,7 @@ func (r *deviceGateway) FetchState(destination net.IP) (device_registry.State, e
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	res, err := coap_utils.GetJSON(ctx, "["+destination.String()+"]:"+DEVICE_COAP_PORT, "api/status")
+	res, err := coap_utils.GetJSON(ctx, "["+destination.String()+"]:"+DEVICE_COAP_PORT, "api/state")
 	if err != nil {
 		return device_registry.State{}, err
 	}
