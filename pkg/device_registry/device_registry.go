@@ -78,6 +78,19 @@ func (r *Registry) GetOrCreate(id string) (Device, error) {
 	return *d, err
 }
 
+func (r *Registry) Contains(id string) (bool, error) {
+	var found bool
+
+	err := r.db.View(func(tx *bolt.Tx) error {
+		devices := tx.Bucket([]byte(DevicesBucket))
+		device := devices.Bucket([]byte(id))
+		found = device != nil
+		return nil
+	})
+
+	return found, err
+}
+
 func (r *Registry) GetDefaults(id string) (*Defaults, error) {
 	var d *Defaults = nil
 	var err error

@@ -118,6 +118,21 @@ func TestRegistry_GetAll(t *testing.T) {
 	assert.Equal(t, expected, getAll(t, reg))
 }
 
+func TestRegistry_Contains(t *testing.T) {
+	reg := CreateTestRegistry(t)
+
+	contains, err := reg.Contains("12345")
+	require.NoError(t, err)
+	assert.Equal(t, false, contains)
+
+	_, err = reg.GetOrCreate("12345")
+	require.NoError(t, err)
+
+	contains, err = reg.Contains("12345")
+	require.NoError(t, err)
+	assert.Equal(t, true, contains)
+}
+
 func updateDefaults(t *testing.T, reg *Registry, id string, d Defaults) Defaults {
 	err := reg.UpdateDefaults(id, d)
 	require.NoError(t, err)
