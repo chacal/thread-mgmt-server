@@ -17,7 +17,7 @@ import (
 const TEST_COAP_PORT = 55683
 
 var TEST_COAP_URL = "localhost:" + strconv.Itoa(TEST_COAP_PORT)
-var DefaultState = device_registry.State{[]net.IP{ip}, 2970, "A100", &device_registry.ParentInfo{"0x4400", 3, 2, -65, -63}}
+var DefaultState = device_registry.State{[]net.IP{ip}, 2970, "A100", &device_registry.ParentInfo{"0x4400", 3, 0, -65, -63}}
 
 func TestGetV1Defaults(t *testing.T) {
 	coapServerTest(t, func(t *testing.T, reg *device_registry.Registry, done chan int) {
@@ -48,7 +48,7 @@ func TestPostV1State(t *testing.T) {
 				"parent": {
 					"rloc16": "0x4400",
 					"linkQualityIn": 3,
-					"linkQualityOut": 2,
+					"linkQualityOut": 0,
 					"avgRssi": -65,
 					"latestRssi": -63
 				}
@@ -69,7 +69,7 @@ func TestPostV1State(t *testing.T) {
 				"parent": {
 					"rloc16": "0x4400",
 					"linkQualityIn": 3,
-					"linkQualityOut": 2,
+					"linkQualityOut": 0,
 					"avgRssi": -65,
 					"latestRssi": -63
 				}

@@ -22,11 +22,11 @@ type Defaults struct {
 }
 
 type ParentInfo struct {
-	Rloc16         string `json:"rloc16,omitempty"`
-	LinkQualityIn  int    `json:"linkQualityIn,omitempty"`
-	LinkQualityOut int    `json:"linkQualityOut,omitempty"`
-	AvgRssi        int    `json:"avgRssi,omitempty"`
-	LatestRssi     int    `json:"latestRssi,omitempty"`
+	Rloc16         string `json:"rloc16"`
+	LinkQualityIn  int    `json:"linkQualityIn"`
+	LinkQualityOut int    `json:"linkQualityOut"`
+	AvgRssi        int    `json:"avgRssi"`
+	LatestRssi     int    `json:"latestRssi"`
 }
 
 type State struct {

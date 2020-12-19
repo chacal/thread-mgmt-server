@@ -67,7 +67,7 @@ func TestV1GetDevices(t *testing.T) {
 					"parent": {
 						"rloc16": "0x4400",
 						"linkQualityIn": 3,
-						"linkQualityOut": 2,
+						"linkQualityOut": 0,
 						"avgRssi": -65,
 						"latestRssi": -63
 					}
@@ -201,7 +201,7 @@ func TestV1PostRefreshState(t *testing.T) {
 				"parent": {
 					"rloc16": "0x4400",
 					"linkQualityIn": 3,
-					"linkQualityOut": 2,
+					"linkQualityOut": 0,
 					"avgRssi": -65,
 					"latestRssi": -63
 				}
