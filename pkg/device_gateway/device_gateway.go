@@ -17,6 +17,7 @@ var DEVICE_COAP_PORT = "5683"
 
 type DeviceGateway interface {
 	PushDefaults(defaults device_registry.Defaults, destination net.IP) error
+	FetchState(destination net.IP) (device_registry.State, error)
 }
 
 type deviceGateway struct{}
@@ -37,4 +38,16 @@ func (r *deviceGateway) PushDefaults(defaults device_registry.Defaults, destinat
 
 	_, err = coap_utils.PostJSON(ctx, "["+destination.String()+"]:"+DEVICE_COAP_PORT, "api/settings", string(payload))
 	return err
+}
+
+func (r *deviceGateway) FetchState(destination net.IP) (device_registry.State, error) {
+	log.Debugf("Fetching state from %+v", destination)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	res, err := coap_utils.GetJSON(ctx, "["+destination.String()+"]:"+DEVICE_COAP_PORT, "api/status")
+	if err != nil {
+		return device_registry.State{}, err
+	}
+	return device_registry.StateFromJSON([]byte(res))
 }

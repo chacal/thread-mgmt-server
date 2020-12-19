@@ -10,10 +10,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	gonet "net"
+	"strings"
 	"testing"
 )
 
 var LOCAL_IP = gonet.ParseIP("127.0.0.1")
+var ip = gonet.ParseIP("ffff::1")
 
 func TestGateway_PushSettings(t *testing.T) {
 	testWithCoapServer(t, func(t *testing.T, r *mux.Router, done chan int) {
@@ -23,6 +25,18 @@ func TestGateway_PushSettings(t *testing.T) {
 		dev := device_registry.Defaults{"D100", -4, 5000}
 		err := gw.PushDefaults(dev, LOCAL_IP)
 		assert.NoError(t, err)
+		done <- 1
+	})
+}
+
+func TestGateway_FetchState(t *testing.T) {
+	testWithCoapServer(t, func(t *testing.T, r *mux.Router, done chan int) {
+		expectJSONGet(t, r, "api/status", `{"vcc": 3000, "addresses": ["ffff::1"]}`)
+
+		gw := Create()
+		state, err := gw.FetchState(LOCAL_IP)
+		assert.NoError(t, err)
+		assert.Equal(t, device_registry.State{[]gonet.IP{ip}, 3000}, state)
 		done <- 1
 	})
 }
@@ -60,5 +74,16 @@ func expectJSONPost(t *testing.T, r *mux.Router, path string, body string) {
 		b, _ := ioutil.ReadAll(msg.Body)
 		assert.JSONEq(t, body, string(b))
 		_ = w.SetResponse(codes.Empty, message.TextPlain, nil)
+	}))
+}
+
+func expectJSONGet(t *testing.T, r *mux.Router, path string, response string) {
+	_ = r.Handle(path, mux.HandlerFunc(func(w mux.ResponseWriter, msg *mux.Message) {
+		assert.Equal(t, codes.GET, msg.Code)
+		p, _ := msg.Options.Path()
+		assert.Equal(t, path, p)
+		cf, _ := msg.Options.Accept()
+		assert.Equal(t, message.AppJSON, cf)
+		_ = w.SetResponse(codes.Content, message.AppJSON, strings.NewReader(response))
 	}))
 }

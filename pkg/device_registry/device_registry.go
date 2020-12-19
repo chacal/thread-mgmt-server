@@ -194,7 +194,7 @@ func getStateInTx(tx *bolt.Tx, id string) (*State, error) {
 		return nil, nil
 	}
 
-	state, err := stateFromJSON(buf)
+	state, err := StateFromJSON(buf)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +265,7 @@ func defaultsFromJSON(buf []byte) (Defaults, error) {
 	return d, nil
 }
 
-func stateFromJSON(buf []byte) (State, error) {
+func StateFromJSON(buf []byte) (State, error) {
 	state := State{}
 	err := json.Unmarshal(buf, &state)
 	if err != nil {

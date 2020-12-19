@@ -34,6 +34,21 @@ func (m *MockDeviceGateway) EXPECT() *MockDeviceGatewayMockRecorder {
 	return m.recorder
 }
 
+// FetchState mocks base method
+func (m *MockDeviceGateway) FetchState(arg0 net.IP) (device_registry.State, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchState", arg0)
+	ret0, _ := ret[0].(device_registry.State)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchState indicates an expected call of FetchState
+func (mr *MockDeviceGatewayMockRecorder) FetchState(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchState", reflect.TypeOf((*MockDeviceGateway)(nil).FetchState), arg0)
+}
+
 // PushDefaults mocks base method
 func (m *MockDeviceGateway) PushDefaults(arg0 device_registry.Defaults, arg1 net.IP) error {
 	m.ctrl.T.Helper()
