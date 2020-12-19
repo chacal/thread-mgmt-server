@@ -40,12 +40,20 @@ export default function DeviceList() {
     setDevices(prev => ({ ...prev, [deviceId]: dev }))
   }
 
+  const deviceRemoved = (deviceId: string) => {
+    setDevices(prev => {
+      const { [deviceId]: id, ...rest } = prev
+      return rest
+    })
+  }
+
   return (
     <Grid container spacing={7}>
       {
         sortedDevices(devices)
           .map(([deviceId, device]) =>
-            <DeviceListItem key={deviceId} deviceId={deviceId} device={device} deviceSaved={deviceSaved}/>)
+            <DeviceListItem key={deviceId} deviceId={deviceId} device={device}
+                            deviceSaved={deviceSaved} deviceRemoved={deviceRemoved}/>)
       }
     </Grid>
   )
