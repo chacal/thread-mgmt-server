@@ -21,6 +21,7 @@ func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry, gw device
 	router.POST("/v1/devices/:device_id/defaults", handlerWithDeps(reg, gw, postV1Defaults))
 	router.POST("/v1/devices/:device_id/config", handlerWithDeps(reg, gw, postV1Config))
 	router.POST("/v1/devices/:device_id/push", handlerWithDeps(reg, gw, postV1DevicesPushDefaults))
+	router.POST("/v1/devices/:device_id/refresh_state", handlerWithDeps(reg, gw, postV1DevicesRefreshState))
 	router.DELETE("/v1/devices/:device_id", handlerWithDeps(reg, gw, deleteV1Devices))
 	return serveStaticFromDir(router, "dist")
 }
@@ -98,7 +99,7 @@ func deleteV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGate
 	ctx.Status(http.StatusOK)
 }
 
-type PushDestination struct {
+type DeviceDestination struct {
 	Address net.IP `json:"address" binding:"required"`
 }
 
@@ -109,7 +110,7 @@ func postV1DevicesPushDefaults(reg *device_registry.Registry, gw device_gateway.
 		return
 	}
 
-	var dst PushDestination
+	var dst DeviceDestination
 	if err := ctx.ShouldBindJSON(&dst); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
 		return
@@ -131,6 +132,45 @@ func postV1DevicesPushDefaults(reg *device_registry.Registry, gw device_gateway.
 	} else {
 		ctx.Status(http.StatusNotFound)
 	}
+}
+
+func postV1DevicesRefreshState(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+	var id Id
+	if err := ctx.ShouldBindUri(&id); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
+		return
+	}
+
+	var dst DeviceDestination
+	if err := ctx.ShouldBindJSON(&dst); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
+		return
+	}
+
+	deviceExists, err := reg.Contains(id.Id)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	if !deviceExists {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	state, err := gw.FetchState(dst.Address)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	err = reg.UpdateState(id.Id, state)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.IndentedJSON(http.StatusOK, state)
 }
 
 type depHandlerFunc = func(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context)

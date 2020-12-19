@@ -167,6 +167,30 @@ func TestV1PostDevicePush(t *testing.T) {
 	T.AssertOK(t, T.RecordPost(router, "/v1/devices/12345/push", `{"address": "ffff::1"}`))
 }
 
+func TestV1PostRefreshState(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	mockGw := mocks.NewMockDeviceGateway(mockCtrl)
+
+	router, reg := setupWithGw(t, mockGw)
+	T.AssertNotFound(t, T.RecordPost(router, "/v1/devices/12345/refresh_state", `{"address": "ffff::1"}`))
+	T.AssertBadRequest(t, T.RecordPost(router, "/v1/devices/12345/refresh_state", ""))
+
+	_, err := reg.GetOrCreate("12345")
+	require.NoError(t, err)
+
+	state := device_registry.State{addr, 3000}
+	mockGw.EXPECT().FetchState(gomock.Eq(net.ParseIP("ffff::1"))).Return(state, nil)
+
+	T.AssertOKJson(t,
+		`{"vcc": 3000, "addresses": ["ffff::1"]}`,
+		T.RecordPost(router, "/v1/devices/12345/refresh_state", `{"address": "ffff::1"}`),
+	)
+
+	devices, err := reg.GetDevices()
+	require.NoError(t, err)
+	assert.Equal(t, devices["12345"].State, state)
+}
+
 func setup(t *testing.T) (*gin.Engine, *device_registry.Registry) {
 	gw := device_gateway.Create()
 	return setupWithGw(t, gw)
