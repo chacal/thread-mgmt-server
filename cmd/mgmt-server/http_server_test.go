@@ -45,7 +45,7 @@ func TestV1GetDevices(t *testing.T) {
 
 	err = reg.UpdateDefaults("ABCDE", device_registry.Defaults{"D100", -4, 5000})
 	require.NoError(t, err)
-	err = reg.UpdateState("ABCDE", device_registry.State{addr, 2970})
+	err = reg.UpdateState("ABCDE", DefaultState)
 	require.NoError(t, err)
 
 	T.AssertOKJson(t,
@@ -59,8 +59,18 @@ func TestV1GetDevices(t *testing.T) {
 				"defaults": { "instance": "D100", "txPower": -4, "pollPeriod": 5000 },
 				"config": {},
 				"state": {
-					"addresses": [ "ffff::1" ],
-					"vcc": 2970
+					"vcc": 2970,
+					"instance": "A100",
+					"addresses": [
+						"ffff::1"
+					],
+					"parent": {
+						"rloc16": "0x4400",
+						"linkQualityIn": 3,
+						"linkQualityOut": 2,
+						"avgRssi": -65,
+						"latestRssi": -63
+					}
 				}
 			}
 		}`,
@@ -178,11 +188,24 @@ func TestV1PostRefreshState(t *testing.T) {
 	_, err := reg.GetOrCreate("12345")
 	require.NoError(t, err)
 
-	state := device_registry.State{addr, 3000}
+	state := DefaultState
 	mockGw.EXPECT().FetchState(gomock.Eq(net.ParseIP("ffff::1"))).Return(state, nil)
 
 	T.AssertOKJson(t,
-		`{"vcc": 3000, "addresses": ["ffff::1"]}`,
+		`{
+				"vcc": 2970,
+				"instance": "A100",
+				"addresses": [
+					"ffff::1"
+				],
+				"parent": {
+					"rloc16": "0x4400",
+					"linkQualityIn": 3,
+					"linkQualityOut": 2,
+					"avgRssi": -65,
+					"latestRssi": -63
+				}
+			}`,
 		T.RecordPost(router, "/v1/devices/12345/refresh_state", `{"address": "ffff::1"}`),
 	)
 

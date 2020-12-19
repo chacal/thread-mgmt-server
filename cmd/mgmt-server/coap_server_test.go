@@ -8,6 +8,7 @@ import (
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"net"
 	"strconv"
 	"testing"
 	"time"
@@ -16,6 +17,7 @@ import (
 const TEST_COAP_PORT = 55683
 
 var TEST_COAP_URL = "localhost:" + strconv.Itoa(TEST_COAP_PORT)
+var DefaultState = device_registry.State{[]net.IP{ip}, 2970, "A100", &device_registry.ParentInfo{"0x4400", 3, 2, -65, -63}}
 
 func TestGetV1Defaults(t *testing.T) {
 	coapServerTest(t, func(t *testing.T, reg *device_registry.Registry, done chan int) {
@@ -28,7 +30,7 @@ func TestGetV1Defaults(t *testing.T) {
 		assert.NoError(t, err)
 		assert.JSONEq(t, `{"instance":"D105", "txPower": 4, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
 
-		err = reg.UpdateState("12345", device_registry.State{addr, 2970})
+		err = reg.UpdateState("12345", DefaultState)
 		assert.NoError(t, err)
 		assert.JSONEq(t, `{"instance":"D105", "txPower": 4, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
 		done <- 1
@@ -37,18 +39,44 @@ func TestGetV1Defaults(t *testing.T) {
 
 func TestPostV1State(t *testing.T) {
 	coapServerTest(t, func(t *testing.T, reg *device_registry.Registry, done chan int) {
-		postJSON(t, "/v1/state/12345", `{"addresses": ["ffff::1"], "vcc": 2970}`)
+		postJSON(t, "/v1/state/12345", `{
+				"vcc": 2970,
+				"instance": "A100",
+				"addresses": [
+					"ffff::1"
+				],
+				"parent": {
+					"rloc16": "0x4400",
+					"linkQualityIn": 3,
+					"linkQualityOut": 2,
+					"avgRssi": -65,
+					"latestRssi": -63
+				}
+			}`)
 
 		dev, err := reg.GetOrCreate("12345")
 		assert.NoError(t, err)
-		assert.Equal(t, dev, device_registry.Device{State: device_registry.State{addr, 2970}})
+		assert.Equal(t, dev, device_registry.Device{State: DefaultState})
 
 		dev, err = reg.GetOrCreate("AABBCC")
 		assert.NoError(t, err)
-		postJSON(t, "/v1/state/AABBCC", `{"addresses": ["ffff::1"], "vcc": 2970}`)
+		postJSON(t, "/v1/state/AABBCC", `{
+				"vcc": 2970,
+				"instance": "A100",
+				"addresses": [
+					"ffff::1"
+				],
+				"parent": {
+					"rloc16": "0x4400",
+					"linkQualityIn": 3,
+					"linkQualityOut": 2,
+					"avgRssi": -65,
+					"latestRssi": -63
+				}
+			}`)
 		dev, err = reg.GetOrCreate("AABBCC")
 		assert.NoError(t, err)
-		assert.Equal(t, dev, device_registry.Device{State: device_registry.State{addr, 2970}})
+		assert.Equal(t, dev, device_registry.Device{State: DefaultState})
 
 		postJSON(t, "/v1/state/AABBCC", `{}`)
 		dev, err = reg.GetOrCreate("AABBCC")

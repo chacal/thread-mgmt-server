@@ -21,9 +21,19 @@ type Defaults struct {
 	PollPeriod int    `json:"pollPeriod,omitempty"`
 }
 
+type ParentInfo struct {
+	Rloc16         string `json:"rloc16,omitempty"`
+	LinkQualityIn  int    `json:"linkQualityIn,omitempty"`
+	LinkQualityOut int    `json:"linkQualityOut,omitempty"`
+	AvgRssi        int    `json:"avgRssi,omitempty"`
+	LatestRssi     int    `json:"latestRssi,omitempty"`
+}
+
 type State struct {
-	Addresses []net.IP `json:"addresses,omitempty"`
-	Vcc       int      `json:"vcc,omitempty"`
+	Addresses []net.IP    `json:"addresses,omitempty"`
+	Vcc       int         `json:"vcc,omitempty"`
+	Instance  string      `json:"instance,omitempty"`
+	Parent    *ParentInfo `json:"parent,omitempty"`
 }
 
 type Config struct {

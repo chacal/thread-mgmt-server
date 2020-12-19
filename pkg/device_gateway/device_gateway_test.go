@@ -16,6 +16,9 @@ import (
 
 var LOCAL_IP = gonet.ParseIP("127.0.0.1")
 var ip = gonet.ParseIP("ffff::1")
+var DefaultState = device_registry.State{[]gonet.IP{ip}, 2970, "A100",
+	&device_registry.ParentInfo{"0x4400", 3, 2, -65, -63},
+}
 
 func TestGateway_PushSettings(t *testing.T) {
 	testWithCoapServer(t, func(t *testing.T, r *mux.Router, done chan int) {
@@ -31,12 +34,27 @@ func TestGateway_PushSettings(t *testing.T) {
 
 func TestGateway_FetchState(t *testing.T) {
 	testWithCoapServer(t, func(t *testing.T, r *mux.Router, done chan int) {
-		expectJSONGet(t, r, "api/status", `{"vcc": 3000, "addresses": ["ffff::1"]}`)
+		expectJSONGet(t, r, "api/state",
+			`{
+				"vcc": 2970,
+				"instance": "A100",
+				"addresses": [
+					"ffff::1"
+				],
+				"parent": {
+					"rloc16": "0x4400",
+					"linkQualityIn": 3,
+					"linkQualityOut": 2,
+					"avgRssi": -65,
+					"latestRssi": -63
+				}
+			}`,
+		)
 
 		gw := Create()
 		state, err := gw.FetchState(LOCAL_IP)
 		assert.NoError(t, err)
-		assert.Equal(t, device_registry.State{[]gonet.IP{ip}, 3000}, state)
+		assert.Equal(t, DefaultState, state)
 		done <- 1
 	})
 }
