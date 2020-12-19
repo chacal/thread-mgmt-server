@@ -30,7 +30,7 @@ func TestRegistry_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, &expectedDefaults, defaults)
 
-	expectedState := updateState(t, reg, "12345", State{[]net.IP{ip}})
+	expectedState := updateState(t, reg, "12345", State{[]net.IP{ip}, 2970})
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
@@ -60,7 +60,7 @@ func TestRegistry_CRUD(t *testing.T) {
 	require.NoError(t, err)
 
 	// Updating state of non-exising device should create it
-	expectedState = updateState(t, reg, "AABBCC", State{[]net.IP{ip}})
+	expectedState = updateState(t, reg, "AABBCC", State{[]net.IP{ip}, 2970})
 
 	dev, err = reg.GetOrCreate("AABBCC")
 	require.NoError(t, err)
@@ -104,11 +104,11 @@ func TestRegistry_GetAll(t *testing.T) {
 	expected["12345"] = Device{Defaults: expectedDefaults}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expectedState := updateState(t, reg, "AABBCC", State{[]net.IP{ip}})
+	expectedState := updateState(t, reg, "AABBCC", State{[]net.IP{ip}, 2970})
 	expected["AABBCC"] = Device{State: expectedState}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expectedState = updateState(t, reg, "12345", State{[]net.IP{ip}})
+	expectedState = updateState(t, reg, "12345", State{[]net.IP{ip}, 2970})
 	expected["12345"] = Device{Defaults: expectedDefaults, State: expectedState}
 	assert.Equal(t, expected, getAll(t, reg))
 

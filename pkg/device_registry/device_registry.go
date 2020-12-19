@@ -23,6 +23,7 @@ type Defaults struct {
 
 type State struct {
 	Addresses []net.IP `json:"addresses,omitempty"`
+	Vcc       int      `json:"vcc,omitempty"`
 }
 
 type Config struct {

@@ -28,7 +28,7 @@ func TestGetV1Defaults(t *testing.T) {
 		assert.NoError(t, err)
 		assert.JSONEq(t, `{"instance":"D105", "txPower": 4, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
 
-		err = reg.UpdateState("12345", device_registry.State{addr})
+		err = reg.UpdateState("12345", device_registry.State{addr, 2970})
 		assert.NoError(t, err)
 		assert.JSONEq(t, `{"instance":"D105", "txPower": 4, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
 		done <- 1
@@ -37,18 +37,18 @@ func TestGetV1Defaults(t *testing.T) {
 
 func TestPostV1State(t *testing.T) {
 	coapServerTest(t, func(t *testing.T, reg *device_registry.Registry, done chan int) {
-		postJSON(t, "/v1/state/12345", `{"addresses": ["ffff::1"]}`)
+		postJSON(t, "/v1/state/12345", `{"addresses": ["ffff::1"], "vcc": 2970}`)
 
 		dev, err := reg.GetOrCreate("12345")
 		assert.NoError(t, err)
-		assert.Equal(t, dev, device_registry.Device{State: device_registry.State{addr}})
+		assert.Equal(t, dev, device_registry.Device{State: device_registry.State{addr, 2970}})
 
 		dev, err = reg.GetOrCreate("AABBCC")
 		assert.NoError(t, err)
-		postJSON(t, "/v1/state/AABBCC", `{"addresses": ["ffff::1"]}`)
+		postJSON(t, "/v1/state/AABBCC", `{"addresses": ["ffff::1"], "vcc": 2970}`)
 		dev, err = reg.GetOrCreate("AABBCC")
 		assert.NoError(t, err)
-		assert.Equal(t, dev, device_registry.Device{State: device_registry.State{addr}})
+		assert.Equal(t, dev, device_registry.Device{State: device_registry.State{addr, 2970}})
 
 		postJSON(t, "/v1/state/AABBCC", `{}`)
 		dev, err = reg.GetOrCreate("AABBCC")

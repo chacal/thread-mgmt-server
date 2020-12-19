@@ -45,7 +45,7 @@ func TestV1GetDevices(t *testing.T) {
 
 	err = reg.UpdateDefaults("ABCDE", device_registry.Defaults{"D100", -4, 5000})
 	require.NoError(t, err)
-	err = reg.UpdateState("ABCDE", device_registry.State{addr})
+	err = reg.UpdateState("ABCDE", device_registry.State{addr, 2970})
 	require.NoError(t, err)
 
 	T.AssertOKJson(t,
@@ -59,7 +59,8 @@ func TestV1GetDevices(t *testing.T) {
 				"defaults": { "instance": "D100", "txPower": -4, "pollPeriod": 5000 },
 				"config": {},
 				"state": {
-					"addresses": [ "ffff::1" ]
+					"addresses": [ "ffff::1" ],
+					"vcc": 2970
 				}
 			}
 		}`,
