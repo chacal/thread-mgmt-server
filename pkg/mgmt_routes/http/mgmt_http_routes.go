@@ -103,38 +103,19 @@ type DeviceDestination struct {
 	Address net.IP `json:"address" binding:"required"`
 }
 
-// TODO: Extract method from the beginning of this function
 func postV1DevicesPushDefaults(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
-	var id Id
-	if err := ctx.ShouldBindUri(&id); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
+	id, dst, err := assertDeviceFromRequestExists(reg, ctx)
+	if err != nil {
 		return
 	}
 
-	var dst DeviceDestination
-	if err := ctx.ShouldBindJSON(&dst); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
-		return
-	}
-
-	deviceExists, err := reg.Contains(id.Id)
+	device, err := reg.Get(id)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
 
-	if !deviceExists {
-		ctx.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-
-	device, err := reg.Get(id.Id)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	err = gw.PushDefaults(device.Defaults, dst.Address)
+	err = gw.PushDefaults(device.Defaults, dst)
 	if err != nil {
 		ctx.Error(errors.WithStack(err))
 		return
@@ -144,42 +125,50 @@ func postV1DevicesPushDefaults(reg *device_registry.Registry, gw device_gateway.
 }
 
 func postV1DevicesRefreshState(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
-	var id Id
-	if err := ctx.ShouldBindUri(&id); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
+	id, dst, err := assertDeviceFromRequestExists(reg, ctx)
+	if err != nil {
 		return
 	}
 
-	var dst DeviceDestination
-	if err := ctx.ShouldBindJSON(&dst); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
-		return
-	}
-
-	deviceExists, err := reg.Contains(id.Id)
+	state, err := gw.FetchState(dst)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
 
-	if !deviceExists {
-		ctx.AbortWithStatus(http.StatusNotFound)
-		return
-	}
-
-	state, err := gw.FetchState(dst.Address)
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	err = reg.UpdateState(id.Id, state)
+	err = reg.UpdateState(id, state)
 	if err != nil {
 		ctx.Error(err)
 		return
 	}
 
 	ctx.IndentedJSON(http.StatusOK, state)
+}
+
+func assertDeviceFromRequestExists(reg *device_registry.Registry, ctx *gin.Context) (string, net.IP, error) {
+	var id Id
+	if err := ctx.ShouldBindUri(&id); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
+		return "", nil, err
+	}
+
+	var dst DeviceDestination
+	if err := ctx.ShouldBindJSON(&dst); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
+		return "", nil, err
+	}
+
+	deviceExists, err := reg.Contains(id.Id)
+	if err != nil {
+		ctx.Error(err)
+		return "", nil, err
+	}
+
+	if !deviceExists {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return "", nil, errors.Errorf("device with id %v not found", id.Id)
+	}
+	return id.Id, dst.Address, nil
 }
 
 type depHandlerFunc = func(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context)
