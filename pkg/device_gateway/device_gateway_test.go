@@ -2,6 +2,7 @@ package device_gateway
 
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
+	"github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 	"github.com/plgd-dev/go-coap/v2/mux"
@@ -25,7 +26,7 @@ func TestGateway_PushSettings(t *testing.T) {
 		expectJSONPost(t, r, "api/settings", `{"instance": "D100","txPower": -4,"pollPeriod": 5000}`)
 
 		gw := Create()
-		dev := device_registry.Defaults{"D100", -4, 5000}
+		dev := device_registry.Defaults{"D100", test.IntP(-4), 5000}
 		err := gw.PushDefaults(dev, LOCAL_IP)
 		assert.NoError(t, err)
 		done <- 1

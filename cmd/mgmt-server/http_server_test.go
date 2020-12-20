@@ -23,7 +23,7 @@ func TestV1GetDevices(t *testing.T) {
 
 	T.AssertOKJson(t, `{}`, T.RecordGet(router, "/v1/devices"))
 
-	err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", -4, 5000})
+	err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", T.IntP(-4), 5000})
 	require.NoError(t, err)
 
 	T.AssertOKJson(t,
@@ -43,7 +43,7 @@ func TestV1GetDevices(t *testing.T) {
 		T.RecordGet(router, "/v1/devices"),
 	)
 
-	err = reg.UpdateDefaults("ABCDE", device_registry.Defaults{"D100", -4, 5000})
+	err = reg.UpdateDefaults("ABCDE", device_registry.Defaults{"D100", T.IntP(-4), 5000})
 	require.NoError(t, err)
 	err = reg.UpdateState("ABCDE", DefaultState)
 	require.NoError(t, err)
@@ -88,12 +88,12 @@ func TestV1PostDefaults(t *testing.T) {
 		"default": {
 			"12345",
 			`{"instance": "D100", "txPower": -4, "pollPeriod": 5000}`,
-			device_registry.Defaults{"D100", -4, 5000},
+			device_registry.Defaults{"D100", T.IntP(-4), 5000},
 		},
 		"missing poll period": {
 			"ABCDE",
 			`{"instance": "D100", "txPower": -4}`,
-			device_registry.Defaults{Instance: "D100", TxPower: -4},
+			device_registry.Defaults{Instance: "D100", TxPower: T.IntP(-4)},
 		},
 		"replaces previous defaults": {
 			"ABCDE",
@@ -151,7 +151,7 @@ func TestV1PostConfig(t *testing.T) {
 func TestV1DeleteDevice(t *testing.T) {
 	router, reg := setup(t)
 
-	err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", -4, 5000})
+	err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", T.IntP(-4), 5000})
 	require.NoError(t, err)
 
 	T.AssertOK(t, T.RecordDelete(router, "/v1/devices/12345"))
@@ -169,7 +169,7 @@ func TestV1PostDevicePush(t *testing.T) {
 	T.AssertNotFound(t, T.RecordPost(router, "/v1/devices/12345/push", `{"address": "ffff::1"}`))
 	T.AssertBadRequest(t, T.RecordPost(router, "/v1/devices/12345/push", ""))
 
-	dev := device_registry.Defaults{"D100", -4, 5000}
+	dev := device_registry.Defaults{"D100", T.IntP(-4), 5000}
 	err := reg.UpdateDefaults("12345", dev)
 	require.NoError(t, err)
 

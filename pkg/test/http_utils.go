@@ -45,3 +45,7 @@ func recordReq(router *gin.Engine, path string, method string, payload string) *
 	router.ServeHTTP(w, req)
 	return w
 }
+
+func IntP(i int) *int {
+	return &i
+}

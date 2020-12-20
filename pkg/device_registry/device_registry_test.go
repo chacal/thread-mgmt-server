@@ -1,6 +1,7 @@
 package device_registry
 
 import (
+	"github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net"
@@ -21,7 +22,7 @@ func TestRegistry_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, Device{}, dev)
 
-	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", -4, 500})
+	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", test.IntP(-4), 500})
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
@@ -51,7 +52,7 @@ func TestRegistry_CRUD(t *testing.T) {
 	assert.Equal(t, Device{}, dev) // Should create new empty Device here
 
 	// Updating defaults of non-exising device should create it
-	expectedDefaults = updateDefaults(t, reg, "AABBCC", Defaults{"D100", -4, 500})
+	expectedDefaults = updateDefaults(t, reg, "AABBCC", Defaults{"D100", test.IntP(-4), 500})
 
 	dev, err = reg.GetOrCreate("AABBCC")
 	require.NoError(t, err)
@@ -101,7 +102,7 @@ func TestRegistry_GetAll(t *testing.T) {
 	expected["EMPTY"] = Device{}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", -4, 5000})
+	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", test.IntP(-4), 5000})
 	expected["12345"] = Device{Defaults: expectedDefaults}
 	assert.Equal(t, expected, getAll(t, reg))
 

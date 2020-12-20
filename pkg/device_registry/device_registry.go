@@ -17,7 +17,7 @@ type Device struct {
 
 type Defaults struct {
 	Instance   string `json:"instance,omitempty"`
-	TxPower    int    `json:"txPower,omitempty"`
+	TxPower    *int   `json:"txPower,omitempty"`
 	PollPeriod int    `json:"pollPeriod,omitempty"`
 }
 

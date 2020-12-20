@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/chacal/thread-mgmt-server/pkg/coap_utils"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
+	"github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/plgd-dev/go-coap/v2/mux"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
 	"github.com/stretchr/testify/assert"
@@ -22,17 +23,17 @@ var DefaultState = device_registry.State{[]net.IP{ip}, 2970, "A100", &device_reg
 func TestGetV1Defaults(t *testing.T) {
 	coapServerTest(t, func(t *testing.T, reg *device_registry.Registry, done chan int) {
 		assert.JSONEq(t, `{}`, getJSON(t, "/v1/defaults/12345"))
-		err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", -4, 5000})
+		err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", test.IntP(-4), 5000})
 		assert.NoError(t, err)
 		assert.JSONEq(t, `{"instance":"D100", "txPower": -4, "pollPeriod":5000}`, getJSON(t, "/v1/defaults/12345"))
 
-		err = reg.UpdateDefaults("12345", device_registry.Defaults{"D105", 4, 500})
+		err = reg.UpdateDefaults("12345", device_registry.Defaults{"D105", test.IntP(0), 500})
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"D105", "txPower": 4, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
+		assert.JSONEq(t, `{"instance":"D105", "txPower": 0, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
 
 		err = reg.UpdateState("12345", DefaultState)
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"D105", "txPower": 4, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
+		assert.JSONEq(t, `{"instance":"D105", "txPower": 0, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
 		done <- 1
 	})
 }
