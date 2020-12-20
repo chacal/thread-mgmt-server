@@ -110,11 +110,6 @@ func TestV1PostDefaults(t *testing.T) {
 		expected device_registry.Defaults
 	}{
 		"default": {
-			"12345",
-			`{"instance": "D100", "txPower": -4, "pollPeriod": 5000}`,
-			device_registry.Defaults{"D100", -4, 5000},
-		},
-		"missing poll period": {
 			"ABCDE",
 			`{"instance": "D101", "txPower": 0, "pollPeriod": 1000}`,
 			device_registry.Defaults{"D101", 0, 1000},
