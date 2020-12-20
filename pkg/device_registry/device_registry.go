@@ -37,7 +37,9 @@ type State struct {
 }
 
 type Config struct {
-	MainIp net.IP `json:"mainIp,omitempty"`
+	MainIp                  net.IP `json:"mainIp,omitempty"`
+	StatePollingEnabled     *bool  `json:"statePollingEnabled,omitempty"`
+	StatePollingIntervalSec int    `json:"statePollingIntervalSec,omitempty"`
 }
 
 const DevicesBucket = "Devices"

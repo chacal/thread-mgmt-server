@@ -49,3 +49,7 @@ func recordReq(router *gin.Engine, path string, method string, payload string) *
 func IntP(i int) *int {
 	return &i
 }
+
+func BoolP(b bool) *bool {
+	return &b
+}

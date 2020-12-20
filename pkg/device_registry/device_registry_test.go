@@ -38,7 +38,7 @@ func TestRegistry_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, Device{Defaults: expectedDefaults, State: expectedState}, dev)
 
-	expectedConfig := updateConfig(t, reg, "12345", Config{ip})
+	expectedConfig := updateConfig(t, reg, "12345", Config{ip, test.BoolP(false), 0})
 
 	dev, err = reg.GetOrCreate("12345")
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestRegistry_CRUD(t *testing.T) {
 	require.NoError(t, err)
 
 	// Updating config of non-exising device should create it
-	expectedConfig = updateConfig(t, reg, "AABBCC", Config{ip})
+	expectedConfig = updateConfig(t, reg, "AABBCC", Config{ip, test.BoolP(true), 300})
 
 	dev, err = reg.GetOrCreate("AABBCC")
 	require.NoError(t, err)

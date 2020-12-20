@@ -122,12 +122,12 @@ func TestV1PostConfig(t *testing.T) {
 		"default": {
 			"12345",
 			`{"mainIp": "ffff::1"}`,
-			device_registry.Config{ip},
+			device_registry.Config{ip, nil, 0},
 		},
 		"replaces previous value": {
 			"12345",
-			`{"mainIp": "ffff::2"}`,
-			device_registry.Config{ip2},
+			`{"mainIp": "ffff::2", "statePollingEnabled": true, "statePollingIntervalSec": 300}`,
+			device_registry.Config{ip2, T.BoolP(true), 300},
 		},
 		"empty config": {
 			"12345",
