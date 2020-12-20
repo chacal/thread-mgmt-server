@@ -23,9 +23,7 @@ export default function DeviceConfigPanel(props: { config: DeviceConfig, state: 
   const [config, setConfig] = useState(props.config)
   const [status, setStatus] = useState(EmptyStatus)
 
-  const onMainIPSelected = (e: ChangeEvent<HTMLSelectElement>) => {
-    setConfig({ ...config, mainIp: e.target.value })
-  }
+  const onMainIPSelected = (mainIp: string) => setConfig({ ...config, mainIp })
 
   const onClickSave = () => {
     setStatus(EmptyStatus)
@@ -38,20 +36,7 @@ export default function DeviceConfigPanel(props: { config: DeviceConfig, state: 
   return <SubPanel heading={'Config'}>
     <Grid item container spacing={3} className={classes.configPanelRow}>
       <Grid item xs={12} sm={9} md={10} lg={8}>
-        <FormControl fullWidth>
-          <InputLabel shrink={true} id="main-ip-label">Main IP address</InputLabel>
-          <Select labelId="main-ip-label"
-                  value={config.mainIp !== undefined ? config.mainIp : ''}
-                  disabled={props.state.addresses === undefined || props.state.addresses.length === 0}
-                  onChange={onMainIPSelected}
-          >
-            {
-              props.state.addresses ? props.state.addresses.map(addr =>
-                <MenuItem key={addr} value={addr}>{addr}</MenuItem>
-              ) : null
-            }
-          </Select>
-        </FormControl>
+        <MainIPSelect mainIp={config.mainIp} addresses={props.state.addresses} onMainIPSelected={onMainIPSelected}/>
       </Grid>
     </Grid>
     <Grid item container spacing={2} xs={12}>
@@ -64,3 +49,21 @@ export default function DeviceConfigPanel(props: { config: DeviceConfig, state: 
     </Grid>
   </SubPanel>
 }
+
+function MainIPSelect(props: { mainIp: string | undefined, addresses: string[] | undefined, onMainIPSelected: (mainIp: string) => void }) {
+  const value = props.mainIp !== undefined ? props.mainIp : ''
+  const disabled = props.addresses === undefined || props.addresses.length === 0
+  const onChange = (e: ChangeEvent<HTMLSelectElement>) => props.onMainIPSelected(e.target.value)
+
+  return <FormControl fullWidth>
+    <InputLabel shrink={true} id="main-ip-label">Main IP address</InputLabel>
+    <Select labelId="main-ip-label" value={value} disabled={disabled} onChange={onChange}>
+      {
+        props.addresses ? props.addresses.map(addr =>
+          <MenuItem key={addr} value={addr}>{addr}</MenuItem>
+        ) : null
+      }
+    </Select>
+  </FormControl>
+}
+
