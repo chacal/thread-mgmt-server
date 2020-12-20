@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/chacal/thread-mgmt-server/pkg/coap_utils"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
-	"github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/plgd-dev/go-coap/v2/mux"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
 	"github.com/stretchr/testify/assert"
@@ -18,28 +17,35 @@ import (
 const TEST_COAP_PORT = 55683
 
 var TEST_COAP_URL = "localhost:" + strconv.Itoa(TEST_COAP_PORT)
-var DefaultState = device_registry.State{[]net.IP{ip}, 2970, "A100", &device_registry.ParentInfo{"0x4400", 3, 0, -65, -63}}
+var testState = device_registry.State{[]net.IP{ip}, 2970, "A100", device_registry.ParentInfo{"0x4400", 3, 0, -65, -63}}
 
 func TestGetV1Defaults(t *testing.T) {
 	coapServerTest(t, func(t *testing.T, reg *device_registry.Registry, done chan int) {
-		assert.JSONEq(t, `{}`, getJSON(t, "/v1/defaults/12345"))
-		err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", test.IntP(-4), 5000})
-		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"D100", "txPower": -4, "pollPeriod":5000}`, getJSON(t, "/v1/defaults/12345"))
+		assert.JSONEq(t, `{"instance":"0000", "txPower": 0, "pollPeriod":1000}`, getJSON(t, "/v1/defaults/ABCDE"))
 
-		err = reg.UpdateDefaults("12345", device_registry.Defaults{"D105", test.IntP(0), 500})
+		_, err := reg.Create("12345")
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"D105", "txPower": 0, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
+		assert.JSONEq(t, `{"instance":"0000", "txPower": 0, "pollPeriod":1000}`, getJSON(t, "/v1/defaults/12345"))
 
-		err = reg.UpdateState("12345", DefaultState)
+		_, err = reg.Create("AABCCEE")
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"D105", "txPower": 0, "pollPeriod":500}`, getJSON(t, "/v1/defaults/12345"))
+
+		err = reg.UpdateDefaults("AABCCEE", device_registry.Defaults{"D105", 0, 500})
+		assert.NoError(t, err)
+		assert.JSONEq(t, `{"instance":"D105", "txPower": 0, "pollPeriod":500}`, getJSON(t, "/v1/defaults/AABCCEE"))
+
+		err = reg.UpdateState("AABCCEE", testState)
+		assert.NoError(t, err)
+		assert.JSONEq(t, `{"instance":"D105", "txPower": 0, "pollPeriod":500}`, getJSON(t, "/v1/defaults/AABCCEE"))
 		done <- 1
 	})
 }
 
 func TestPostV1State(t *testing.T) {
 	coapServerTest(t, func(t *testing.T, reg *device_registry.Registry, done chan int) {
+		_, err := reg.Create("12345")
+		assert.NoError(t, err)
+
 		postJSON(t, "/v1/state/12345", `{
 				"vcc": 2970,
 				"instance": "A100",
@@ -55,35 +61,16 @@ func TestPostV1State(t *testing.T) {
 				}
 			}`)
 
-		dev, err := reg.GetOrCreate("12345")
+		dev, err := reg.Get("12345")
 		assert.NoError(t, err)
-		assert.Equal(t, dev, device_registry.Device{State: DefaultState})
+		assert.Equal(t, *dev.State, testState)
 
-		dev, err = reg.GetOrCreate("AABBCC")
-		assert.NoError(t, err)
-		postJSON(t, "/v1/state/AABBCC", `{
-				"vcc": 2970,
-				"instance": "A100",
-				"addresses": [
-					"ffff::1"
-				],
-				"parent": {
-					"rloc16": "0x4400",
-					"linkQualityIn": 3,
-					"linkQualityOut": 0,
-					"avgRssi": -65,
-					"latestRssi": -63
-				}
-			}`)
-		dev, err = reg.GetOrCreate("AABBCC")
-		assert.NoError(t, err)
-		assert.Equal(t, dev, device_registry.Device{State: DefaultState})
-
-		postJSON(t, "/v1/state/AABBCC", `{}`)
-		dev, err = reg.GetOrCreate("AABBCC")
-		assert.NoError(t, err)
-		assert.Equal(t, dev, device_registry.Device{})
-
+		// TODO: Test error with missing parameters
+		/*		postJSON(t, "/v1/state/AABBCC", `{}`)
+				dev, err = reg.Get("AABBCC")
+				assert.NoError(t, err)
+				assert.Equal(t, dev, device_registry.Device{})
+		*/
 		done <- 1
 	})
 }

@@ -2,7 +2,6 @@ package device_gateway
 
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
-	"github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/plgd-dev/go-coap/v2/message"
 	"github.com/plgd-dev/go-coap/v2/message/codes"
 	"github.com/plgd-dev/go-coap/v2/mux"
@@ -17,8 +16,8 @@ import (
 
 var LOCAL_IP = gonet.ParseIP("127.0.0.1")
 var ip = gonet.ParseIP("ffff::1")
-var DefaultState = device_registry.State{[]gonet.IP{ip}, 2970, "A100",
-	&device_registry.ParentInfo{"0x4400", 3, 2, -65, -63},
+var testState = device_registry.State{[]gonet.IP{ip}, 2970, "A100",
+	device_registry.ParentInfo{"0x4400", 3, 2, -65, -63},
 }
 
 func TestGateway_PushSettings(t *testing.T) {
@@ -26,7 +25,7 @@ func TestGateway_PushSettings(t *testing.T) {
 		expectJSONPost(t, r, "api/settings", `{"instance": "D100","txPower": -4,"pollPeriod": 5000}`)
 
 		gw := Create()
-		dev := device_registry.Defaults{"D100", test.IntP(-4), 5000}
+		dev := device_registry.Defaults{"D100", -4, 5000}
 		err := gw.PushDefaults(dev, LOCAL_IP)
 		assert.NoError(t, err)
 		done <- 1
@@ -55,7 +54,7 @@ func TestGateway_FetchState(t *testing.T) {
 		gw := Create()
 		state, err := gw.FetchState(LOCAL_IP)
 		assert.NoError(t, err)
-		assert.Equal(t, DefaultState, state)
+		assert.Equal(t, testState, state)
 		done <- 1
 	})
 }

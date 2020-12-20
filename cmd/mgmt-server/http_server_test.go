@@ -23,7 +23,28 @@ func TestV1GetDevices(t *testing.T) {
 
 	T.AssertOKJson(t, `{}`, T.RecordGet(router, "/v1/devices"))
 
-	err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", T.IntP(-4), 5000})
+	_, err := reg.Create("12345")
+	require.NoError(t, err)
+
+	T.AssertOKJson(t,
+		`{
+			"12345": {
+				"defaults": {
+					"instance": "0000",
+					"txPower": 0,
+					"pollPeriod": 1000
+				},
+				"config": {
+					"mainIp": "",
+					"statePollingEnabled": false,
+					"statePollingIntervalSec": 600
+				}
+			}
+		}`,
+		T.RecordGet(router, "/v1/devices"),
+	)
+
+	err = reg.UpdateDefaults("12345", device_registry.Defaults{"D100", -4, 5000})
 	require.NoError(t, err)
 
 	T.AssertOKJson(t,
@@ -35,29 +56,32 @@ func TestV1GetDevices(t *testing.T) {
 					"pollPeriod": 5000
 				},
 				"config": {
-				},
-				"state": {
+					"mainIp": "",
+					"statePollingEnabled": false,
+					"statePollingIntervalSec": 600
 				}
 			}
 		}`,
 		T.RecordGet(router, "/v1/devices"),
 	)
 
-	err = reg.UpdateDefaults("ABCDE", device_registry.Defaults{"D100", T.IntP(-4), 5000})
+	_, err = reg.Create("ABCDE")
 	require.NoError(t, err)
-	err = reg.UpdateState("ABCDE", DefaultState)
+
+	err = reg.UpdateDefaults("ABCDE", device_registry.Defaults{"D101", 0, 3000})
+	require.NoError(t, err)
+	err = reg.UpdateState("ABCDE", testState)
 	require.NoError(t, err)
 
 	T.AssertOKJson(t,
 		`{
 			"12345": {
 				"defaults": { "instance": "D100", "txPower": -4, "pollPeriod": 5000 },
-				"config": {},
-				"state": {}
+				"config": { "mainIp": "", "statePollingEnabled": false, "statePollingIntervalSec": 600 }
 			},
 			"ABCDE": {
-				"defaults": { "instance": "D100", "txPower": -4, "pollPeriod": 5000 },
-				"config": {},
+				"defaults": { "instance": "D101", "txPower": 0, "pollPeriod": 3000 },
+				"config": { "mainIp": "", "statePollingEnabled": false, "statePollingIntervalSec": 600 },
 				"state": {
 					"vcc": 2970,
 					"instance": "A100",
@@ -88,26 +112,27 @@ func TestV1PostDefaults(t *testing.T) {
 		"default": {
 			"12345",
 			`{"instance": "D100", "txPower": -4, "pollPeriod": 5000}`,
-			device_registry.Defaults{"D100", T.IntP(-4), 5000},
+			device_registry.Defaults{"D100", -4, 5000},
 		},
 		"missing poll period": {
 			"ABCDE",
-			`{"instance": "D100", "txPower": -4}`,
-			device_registry.Defaults{Instance: "D100", TxPower: T.IntP(-4)},
+			`{"instance": "D101", "txPower": 0, "pollPeriod": 1000}`,
+			device_registry.Defaults{"D101", 0, 1000},
 		},
 		"replaces previous defaults": {
 			"ABCDE",
-			`{"pollPeriod": 5000}`,
-			device_registry.Defaults{PollPeriod: 5000},
+			`{"instance": "D102", "txPower": 4, "pollPeriod": 2000}`,
+			device_registry.Defaults{"D102", 4, 2000},
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			_, _ = reg.Create(tc.id)
 			T.AssertOK(t, T.RecordPost(router, "/v1/devices/"+tc.id+"/defaults", tc.payload))
-			defaults, err := reg.GetDefaults(tc.id)
+			device, err := reg.Get(tc.id)
 			require.NoError(t, err)
-			assert.Equal(t, &tc.expected, defaults)
+			assert.Equal(t, tc.expected, device.Defaults)
 		})
 	}
 }
@@ -121,29 +146,23 @@ func TestV1PostConfig(t *testing.T) {
 	}{
 		"default": {
 			"12345",
-			`{"mainIp": "ffff::1"}`,
-			device_registry.Config{ip, nil, 0},
+			`{"mainIp": "ffff::1", "statePollingEnabled": false, "statePollingIntervalSec": 100}`,
+			device_registry.Config{ip, false, 100},
 		},
 		"replaces previous value": {
 			"12345",
 			`{"mainIp": "ffff::2", "statePollingEnabled": true, "statePollingIntervalSec": 300}`,
-			device_registry.Config{ip2, T.BoolP(true), 300},
-		},
-		"empty config": {
-			"12345",
-			`{}`,
-			device_registry.Config{},
+			device_registry.Config{ip2, true, 300},
 		},
 	}
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			_, _ = reg.Create(tc.id)
 			T.AssertOK(t, T.RecordPost(router, "/v1/devices/"+tc.id+"/config", tc.payload))
-			devices, err := reg.GetDevices()
+			device, err := reg.Get(tc.id)
 			require.NoError(t, err)
-			config := devices[tc.id].Config
-			require.NoError(t, err)
-			assert.Equal(t, tc.expected, config)
+			assert.Equal(t, tc.expected, device.Config)
 		})
 	}
 }
@@ -151,14 +170,14 @@ func TestV1PostConfig(t *testing.T) {
 func TestV1DeleteDevice(t *testing.T) {
 	router, reg := setup(t)
 
-	err := reg.UpdateDefaults("12345", device_registry.Defaults{"D100", T.IntP(-4), 5000})
+	_, err := reg.Create("12345")
 	require.NoError(t, err)
 
 	T.AssertOK(t, T.RecordDelete(router, "/v1/devices/12345"))
 
-	dev, err := reg.GetOrCreate("12345")
+	contains, err := reg.Contains("12345")
 	require.NoError(t, err)
-	assert.Equal(t, device_registry.Device{}, dev) // Should return empty device
+	assert.Equal(t, false, contains)
 }
 
 func TestV1PostDevicePush(t *testing.T) {
@@ -169,11 +188,10 @@ func TestV1PostDevicePush(t *testing.T) {
 	T.AssertNotFound(t, T.RecordPost(router, "/v1/devices/12345/push", `{"address": "ffff::1"}`))
 	T.AssertBadRequest(t, T.RecordPost(router, "/v1/devices/12345/push", ""))
 
-	dev := device_registry.Defaults{"D100", T.IntP(-4), 5000}
-	err := reg.UpdateDefaults("12345", dev)
+	_, err := reg.Create("12345")
 	require.NoError(t, err)
 
-	mockGw.EXPECT().PushDefaults(gomock.Eq(dev), gomock.Eq(net.ParseIP("ffff::1")))
+	mockGw.EXPECT().PushDefaults(gomock.Eq(device_registry.DefaultDevice.Defaults), gomock.Eq(net.ParseIP("ffff::1")))
 	T.AssertOK(t, T.RecordPost(router, "/v1/devices/12345/push", `{"address": "ffff::1"}`))
 }
 
@@ -185,10 +203,10 @@ func TestV1PostRefreshState(t *testing.T) {
 	T.AssertNotFound(t, T.RecordPost(router, "/v1/devices/12345/refresh_state", `{"address": "ffff::1"}`))
 	T.AssertBadRequest(t, T.RecordPost(router, "/v1/devices/12345/refresh_state", ""))
 
-	_, err := reg.GetOrCreate("12345")
+	_, err := reg.Create("12345")
 	require.NoError(t, err)
 
-	state := DefaultState
+	state := testState
 	mockGw.EXPECT().FetchState(gomock.Eq(net.ParseIP("ffff::1"))).Return(state, nil)
 
 	T.AssertOKJson(t,
@@ -209,9 +227,9 @@ func TestV1PostRefreshState(t *testing.T) {
 		T.RecordPost(router, "/v1/devices/12345/refresh_state", `{"address": "ffff::1"}`),
 	)
 
-	devices, err := reg.GetDevices()
+	device, err := reg.Get("12345")
 	require.NoError(t, err)
-	assert.Equal(t, devices["12345"].State, state)
+	assert.Equal(t, *device.State, state)
 }
 
 func setup(t *testing.T) (*gin.Engine, *device_registry.Registry) {

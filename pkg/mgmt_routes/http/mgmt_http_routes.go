@@ -22,7 +22,7 @@ func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry, gw device
 	router.POST("/v1/devices/:device_id/config", handlerWithDeps(reg, gw, postV1Config))
 	router.POST("/v1/devices/:device_id/push", handlerWithDeps(reg, gw, postV1DevicesPushDefaults))
 	router.POST("/v1/devices/:device_id/refresh_state", handlerWithDeps(reg, gw, postV1DevicesRefreshState))
-	router.DELETE("/v1/devices/:device_id", handlerWithDeps(reg, gw, deleteV1Devices))
+	router.DELETE("/v1/devices/:device_id", handlerWithDeps(reg, gw, deleteV1Device))
 	return serveStaticFromDir(router, "dist")
 }
 
@@ -54,7 +54,7 @@ func postV1Defaults(reg *device_registry.Registry, gw device_gateway.DeviceGatew
 
 	err := reg.UpdateDefaults(id.Id, defaults)
 	if err != nil {
-		ctx.Error(errors.WithStack(err))
+		ctx.Error(err)
 		return
 	}
 
@@ -76,14 +76,14 @@ func postV1Config(reg *device_registry.Registry, gw device_gateway.DeviceGateway
 
 	err := reg.UpdateConfig(id.Id, config)
 	if err != nil {
-		ctx.Error(errors.WithStack(err))
+		ctx.Error(err)
 		return
 	}
 
 	ctx.Status(http.StatusOK)
 }
 
-func deleteV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+func deleteV1Device(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
 	var id Id
 	if err := ctx.ShouldBindUri(&id); err != nil {
 		ctx.Error(errors.WithStack(err))
@@ -92,7 +92,7 @@ func deleteV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGate
 
 	err := reg.DeleteDevice(id.Id)
 	if err != nil {
-		ctx.Error(errors.WithStack(err))
+		ctx.Error(err)
 		return
 	}
 
@@ -103,6 +103,7 @@ type DeviceDestination struct {
 	Address net.IP `json:"address" binding:"required"`
 }
 
+// TODO: Extract method from the beginning of this function
 func postV1DevicesPushDefaults(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
 	var id Id
 	if err := ctx.ShouldBindUri(&id); err != nil {
@@ -116,22 +117,30 @@ func postV1DevicesPushDefaults(reg *device_registry.Registry, gw device_gateway.
 		return
 	}
 
-	defaults, err := reg.GetDefaults(id.Id)
+	deviceExists, err := reg.Contains(id.Id)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	if !deviceExists {
+		ctx.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	device, err := reg.Get(id.Id)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	err = gw.PushDefaults(device.Defaults, dst.Address)
 	if err != nil {
 		ctx.Error(errors.WithStack(err))
 		return
 	}
 
-	if defaults != nil {
-		err = gw.PushDefaults(*defaults, dst.Address)
-		if err != nil {
-			ctx.Error(errors.WithStack(err))
-		} else {
-			ctx.Status(http.StatusOK)
-		}
-	} else {
-		ctx.Status(http.StatusNotFound)
-	}
+	ctx.Status(http.StatusOK)
 }
 
 func postV1DevicesRefreshState(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
@@ -187,7 +196,7 @@ func errorHandlingMiddleware(ctx *gin.Context) {
 		for _, e := range ctx.Errors {
 			log.Errorf("%+v", e.Err)
 		}
-		if ! ctx.IsAborted() {
+		if !ctx.IsAborted() {
 			ctx.AbortWithStatus(http.StatusInternalServerError)
 		}
 	}
