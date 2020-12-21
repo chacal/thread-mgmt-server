@@ -65,15 +65,15 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
 
   return <SubPanel heading={'Defaults'}>
     <Grid item container spacing={3} className={classes.defaultsPanelInputs}>
-      <Grid item xs={4} sm={3} md={4} lg={3}>
+      <DefaultComponent>
         <InstanceTextField instance={defaults.instance} onInstanceChange={onInstanceChange}/>
-      </Grid>
-      <Grid item xs={4} sm={3} md={4} lg={3}>
+      </DefaultComponent>
+      <DefaultComponent>
         <TxPowerSelect txPower={defaults.txPower} onTxPowerSelected={onTxPowerSelected}/>
-      </Grid>
-      <Grid item xs={4} sm={3} md={4} lg={3}>
+      </DefaultComponent>
+      <DefaultComponent>
         <PollPeriodAutoComplete pollPeriod={defaults.pollPeriod} onPollPeriodChange={onPollPeriodChange}/>
-      </Grid>
+      </DefaultComponent>
     </Grid>
     <Grid item container spacing={2} xs={12} alignItems={'center'}>
       <Grid item>
@@ -87,6 +87,12 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
       <StatusMessage {...status}/>
     </Grid>
   </SubPanel>
+}
+
+function DefaultComponent(props: { children?: React.ReactNode }) {
+  return <Grid item xs={4} sm={3} md={4} lg={3}>
+    {props.children}
+  </Grid>
 }
 
 function InstanceTextField(props: { instance: string, onInstanceChange: (e: ChangeEvent<HTMLInputElement>) => void }) {
