@@ -31,12 +31,10 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
   const classes = useStyles()
 
   const [defaults, setDefaults] = useState(props.defaults)
-  const [instanceError, setInstanceError] = useState(false)
   const [status, setStatus] = useState(EmptyStatus)
 
-  const onInstanceChange = (instance: string, err: boolean) => {
-    setInstanceError(err)
-    setDefaults({ ...defaults, instance })
+  const onInstanceChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setDefaults({ ...defaults, instance: e.target.value })
   }
 
   const onTxPowerSelected = (e: ChangeEvent<HTMLSelectElement>) => {
@@ -62,7 +60,7 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
       .catch(setErrorStatus)
   }
 
-  const isSaveDisabled = () => instanceError || isEqual(defaults, props.defaults)
+  const isSaveDisabled = () => !isValidInstance(defaults.instance) || isEqual(defaults, props.defaults)
   const isPushDisabled = () => props.mainIp === '' || !isEqual(defaults, props.defaults)
 
   return <SubPanel heading={'Defaults'}>
@@ -91,19 +89,9 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
   </SubPanel>
 }
 
-function InstanceTextField(props: { instance: string, onInstanceChange: (instance: string, err: boolean) => void }) {
-  const regex = /^[\w]{2,4}$/
-  const [err, setErr] = useState(false)
-
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const v = e.target.value
-    const hasError = !regex.test(v)
-    setErr(hasError)
-    props.onInstanceChange(v, hasError)
-  }
-
-  return <TextField label="Instance" error={err} value={props.instance} onChange={onChange}
-                    InputLabelProps={{ shrink: true }}/>
+function InstanceTextField(props: { instance: string, onInstanceChange: (e: ChangeEvent<HTMLInputElement>) => void }) {
+  return <TextField label="Instance" error={!isValidInstance(props.instance)} value={props.instance}
+                    onChange={props.onInstanceChange} InputLabelProps={{ shrink: true }}/>
 }
 
 function TxPowerSelect(props: { txPower: number, onTxPowerSelected: SelectInputProps['onChange'] }) {
@@ -138,4 +126,9 @@ function PollPeriodAutoComplete(props: { pollPeriod: number, onPollPeriodChange:
       {[50, 100, 200, 500, 1000, 2000, 5000, 10000, 15000].map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
     </Select>
   </FormControl>
+}
+
+function isValidInstance(instance: string) {
+  const regex = /^[\w]{2,4}$/
+  return regex.test(instance)
 }
