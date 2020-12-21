@@ -9,9 +9,9 @@ interface Devices {
 }
 
 export interface DeviceDefaults {
-  instance?: string
-  txPower?: number
-  pollPeriod?: number
+  instance: string
+  txPower: number
+  pollPeriod: number
 }
 
 interface ParentInfo {
@@ -23,19 +23,21 @@ interface ParentInfo {
 }
 
 export interface DeviceState {
-  addresses?: string[]
-  vcc?: number
-  instance?: string
-  parent?: ParentInfo
+  addresses: string[]
+  vcc: number
+  instance: string
+  parent: ParentInfo
 }
 
 export interface DeviceConfig {
-  mainIp?: string
+  mainIp: string,
+  statePollingEnabled: boolean,
+  statePollingIntervalSec: number
 }
 
 export interface Device {
   defaults: DeviceDefaults
-  state: DeviceState
+  state?: DeviceState
   config: DeviceConfig
 }
 

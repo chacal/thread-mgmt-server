@@ -19,12 +19,26 @@ func RegisterRoutes(router *mux.Router, reg *device_registry.Registry) {
 func getV1Defaults(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message) {
 	deviceId, err := coap_utils.GetLastPathPart(r)
 	if err != nil {
-		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
+		coap_utils.RespondWithInternalServerError(w, err)
+		return
 	}
 
-	dev, err := reg.GetOrCreate(deviceId)
+	deviceExists, err := reg.Contains(deviceId)
 	if err != nil {
-		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
+		coap_utils.RespondWithInternalServerError(w, err)
+		return
+	}
+
+	var dev *device_registry.Device
+	if !deviceExists {
+		dev, err = reg.Create(deviceId)
+	} else {
+		dev, err = reg.Get(deviceId)
+	}
+
+	if err != nil {
+		coap_utils.RespondWithInternalServerError(w, err)
+		return
 	}
 
 	coap_utils.RespondWithJSON(w, dev.Defaults)
@@ -33,12 +47,14 @@ func getV1Defaults(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.M
 func postV1State(reg *device_registry.Registry, w mux.ResponseWriter, r *mux.Message) {
 	deviceId, err := coap_utils.GetLastPathPart(r)
 	if err != nil {
-		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
+		coap_utils.RespondWithInternalServerError(w, err)
+		return
 	}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		coap_utils.RespondWithInternalServerError(w, errors.WithStack(err))
+		coap_utils.RespondWithInternalServerError(w, err)
+		return
 	}
 
 	var state device_registry.State

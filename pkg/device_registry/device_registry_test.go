@@ -1,7 +1,6 @@
 package device_registry
 
 import (
-	"github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net"
@@ -9,115 +8,126 @@ import (
 )
 
 var ip = net.ParseIP("ffff::1")
-var DefaultState = State{[]net.IP{ip}, 2970, "A100", &ParentInfo{"0x4400", 3, 2, -65, -63}}
 
-func TestRegistry_CRUD(t *testing.T) {
+var testState = State{[]net.IP{ip}, 2970, "A100", ParentInfo{"0x4400", 3, 2, -65, -63}}
+
+func TestRegistry_GetAndCreate(t *testing.T) {
 	reg := CreateTestRegistry(t)
 
-	defaults, err := reg.GetDefaults("12345")
+	dev, err := reg.Get("12345")
+	assert.Error(t, err)
+	assert.Equal(t, (*Device)(nil), dev)
+
+	dev, err = reg.Create("12345")
 	require.NoError(t, err)
-	assert.Equal(t, (*Defaults)(nil), defaults)
-
-	dev, err := reg.GetOrCreate("12345")
-	require.NoError(t, err)
-	assert.Equal(t, Device{}, dev)
-
-	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", test.IntP(-4), 500})
-
-	dev, err = reg.GetOrCreate("12345")
-	require.NoError(t, err)
-	assert.Equal(t, Device{Defaults: expectedDefaults}, dev)
-
-	defaults, err = reg.GetDefaults("12345")
-	require.NoError(t, err)
-	assert.Equal(t, &expectedDefaults, defaults)
-
-	expectedState := updateState(t, reg, "12345", DefaultState)
-
-	dev, err = reg.GetOrCreate("12345")
-	require.NoError(t, err)
-	assert.Equal(t, Device{Defaults: expectedDefaults, State: expectedState}, dev)
-
-	expectedConfig := updateConfig(t, reg, "12345", Config{ip, test.BoolP(false), 0})
-
-	dev, err = reg.GetOrCreate("12345")
-	require.NoError(t, err)
-	assert.Equal(t, Device{expectedDefaults, expectedState, expectedConfig}, dev)
-
-	err = reg.DeleteDevice("12345")
-	require.NoError(t, err)
-
-	dev, err = reg.GetOrCreate("12345")
-	require.NoError(t, err)
-	assert.Equal(t, Device{}, dev) // Should create new empty Device here
-
-	// Updating defaults of non-exising device should create it
-	expectedDefaults = updateDefaults(t, reg, "AABBCC", Defaults{"D100", test.IntP(-4), 500})
-
-	dev, err = reg.GetOrCreate("AABBCC")
-	require.NoError(t, err)
-	assert.Equal(t, Device{Defaults: expectedDefaults}, dev)
-
-	err = reg.DeleteDevice("AABBCC")
-	require.NoError(t, err)
-
-	// Updating state of non-exising device should create it
-	expectedState = updateState(t, reg, "AABBCC", DefaultState)
-
-	dev, err = reg.GetOrCreate("AABBCC")
-	require.NoError(t, err)
-	assert.Equal(t, Device{State: expectedState}, dev)
-
-	_ = updateState(t, reg, "AABBCC", State{})
-
-	dev, err = reg.GetOrCreate("AABBCC")
-	require.NoError(t, err)
-	assert.Equal(t, Device{}, dev)
-
-	err = reg.DeleteDevice("AABBCC")
-	require.NoError(t, err)
-
-	// Updating config of non-exising device should create it
-	expectedConfig = updateConfig(t, reg, "AABBCC", Config{ip, test.BoolP(true), 300})
-
-	dev, err = reg.GetOrCreate("AABBCC")
-	require.NoError(t, err)
-	assert.Equal(t, Device{Config: expectedConfig}, dev)
-
-	_ = updateConfig(t, reg, "AABBCC", Config{})
-
-	dev, err = reg.GetOrCreate("AABBCC")
-	require.NoError(t, err)
-	assert.Equal(t, Device{}, dev)
+	assert.Equal(t, &DefaultDevice, dev)
 }
 
-func TestRegistry_GetAll(t *testing.T) {
+func TestRegistry_UpdateDefaults(t *testing.T) {
+	reg := CreateTestRegistry(t)
+
+	err := reg.UpdateDefaults("12345", DefaultDefaults)
+	assert.Error(t, err)
+
+	dev, _ := reg.Create("12345")
+
+	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", -4, 500})
+	dev, _ = reg.Get("12345")
+	assert.Equal(t, &Device{Defaults: expectedDefaults, Config: DefaultConfig}, dev)
+
+	_ = updateDefaults(t, reg, "12345", Defaults{})
+	dev, _ = reg.Get("12345")
+	assert.Equal(t, &Device{Defaults: Defaults{"", 0, 0}, Config: DefaultConfig}, dev)
+}
+
+func TestRegistry_UpdateConfig(t *testing.T) {
+	reg := CreateTestRegistry(t)
+
+	err := reg.UpdateConfig("12345", DefaultConfig)
+	assert.Error(t, err)
+
+	dev, _ := reg.Create("12345")
+
+	expectedConfig := updateConfig(t, reg, "12345", Config{ip, true, 300})
+	dev, _ = reg.Get("12345")
+	assert.Equal(t, &Device{Defaults: DefaultDefaults, Config: expectedConfig}, dev)
+
+	expectedConfig = updateConfig(t, reg, "12345", Config{})
+	dev, _ = reg.Get("12345")
+	assert.Equal(t, &Device{Defaults: DefaultDefaults, Config: Config{nil, false, 0}}, dev)
+}
+
+func TestRegistry_UpdateState(t *testing.T) {
+	reg := CreateTestRegistry(t)
+
+	err := reg.UpdateState("12345", testState)
+	assert.Error(t, err)
+
+	dev, _ := reg.Create("12345")
+
+	expectedState := updateState(t, reg, "12345", testState)
+	dev, _ = reg.Get("12345")
+	assert.Equal(t, &Device{Defaults: DefaultDefaults, Config: DefaultConfig, State: expectedState}, dev)
+}
+
+func TestRegistry_GetDevices(t *testing.T) {
 	reg := CreateTestRegistry(t)
 
 	expected := map[string]Device{}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	_, err := reg.GetOrCreate("EMPTY")
+	_, err := reg.Create("EMPTY")
 	assert.NoError(t, err)
-	expected["EMPTY"] = Device{}
+	expected["EMPTY"] = DefaultDevice
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", test.IntP(-4), 5000})
-	expected["12345"] = Device{Defaults: expectedDefaults}
+	_, err = reg.Create("12345")
+	assert.NoError(t, err)
+	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", -4, 5000})
+	expected["12345"] = Device{Defaults: expectedDefaults, Config: DefaultConfig}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expectedState := updateState(t, reg, "AABBCC", DefaultState)
-	expected["AABBCC"] = Device{State: expectedState}
+	expectedConfig := updateConfig(t, reg, "12345", Config{ip, true, 100})
+	expected["12345"] = Device{Defaults: expectedDefaults, Config: expectedConfig}
 	assert.Equal(t, expected, getAll(t, reg))
 
-	expectedState = updateState(t, reg, "12345", DefaultState)
-	expected["12345"] = Device{Defaults: expectedDefaults, State: expectedState}
+	expectedState := updateState(t, reg, "12345", testState)
+	expected["12345"] = Device{Defaults: expectedDefaults, State: expectedState, Config: expectedConfig}
+	assert.Equal(t, expected, getAll(t, reg))
+
+	_, err = reg.Create("AABBCC")
+
+	expected["AABBCC"] = DefaultDevice
+	assert.Equal(t, expected, getAll(t, reg))
+
+	expectedState = updateState(t, reg, "AABBCC", testState)
+	expected["AABBCC"] = Device{Defaults: DefaultDefaults, State: expectedState, Config: DefaultConfig}
 	assert.Equal(t, expected, getAll(t, reg))
 
 	err = reg.DeleteDevice("12345")
 	assert.NoError(t, err)
 	delete(expected, "12345")
 	assert.Equal(t, expected, getAll(t, reg))
+}
+
+func TestRegistry_DeleteDevice(t *testing.T) {
+	reg := CreateTestRegistry(t)
+
+	err := reg.DeleteDevice("12345")
+	assert.Error(t, err)
+
+	_, err = reg.Create("12345")
+	assert.NoError(t, err)
+
+	dev, err := reg.Get("12345")
+	require.NoError(t, err)
+	assert.Equal(t, &DefaultDevice, dev)
+
+	err = reg.DeleteDevice("12345")
+	assert.NoError(t, err)
+
+	_, err = reg.Get("12345")
+	assert.Error(t, err)
 }
 
 func TestRegistry_Contains(t *testing.T) {
@@ -127,7 +137,7 @@ func TestRegistry_Contains(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, false, contains)
 
-	_, err = reg.GetOrCreate("12345")
+	_, err = reg.Create("12345")
 	require.NoError(t, err)
 
 	contains, err = reg.Contains("12345")
@@ -141,10 +151,10 @@ func updateDefaults(t *testing.T, reg *Registry, id string, d Defaults) Defaults
 	return d
 }
 
-func updateState(t *testing.T, reg *Registry, id string, state State) State {
+func updateState(t *testing.T, reg *Registry, id string, state State) *State {
 	err := reg.UpdateState(id, state)
 	require.NoError(t, err)
-	return state
+	return &state
 }
 
 func updateConfig(t *testing.T, reg *Registry, id string, config Config) Config {

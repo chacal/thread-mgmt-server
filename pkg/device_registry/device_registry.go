@@ -11,14 +11,14 @@ import (
 
 type Device struct {
 	Defaults Defaults `json:"defaults"`
-	State    State    `json:"state"`
+	State    *State   `json:"state,omitempty"`
 	Config   Config   `json:"config"`
 }
 
 type Defaults struct {
-	Instance   string `json:"instance,omitempty"`
-	TxPower    *int   `json:"txPower,omitempty"`
-	PollPeriod int    `json:"pollPeriod,omitempty"`
+	Instance   string `json:"instance"`
+	TxPower    int    `json:"txPower"`
+	PollPeriod int    `json:"pollPeriod"`
 }
 
 type ParentInfo struct {
@@ -30,22 +30,26 @@ type ParentInfo struct {
 }
 
 type State struct {
-	Addresses []net.IP    `json:"addresses,omitempty"`
-	Vcc       int         `json:"vcc,omitempty"`
-	Instance  string      `json:"instance,omitempty"`
-	Parent    *ParentInfo `json:"parent,omitempty"`
+	Addresses []net.IP   `json:"addresses"`
+	Vcc       int        `json:"vcc"`
+	Instance  string     `json:"instance"`
+	Parent    ParentInfo `json:"parent"`
 }
 
 type Config struct {
-	MainIp                  net.IP `json:"mainIp,omitempty"`
-	StatePollingEnabled     *bool  `json:"statePollingEnabled,omitempty"`
-	StatePollingIntervalSec int    `json:"statePollingIntervalSec,omitempty"`
+	MainIp                  net.IP `json:"mainIp"`
+	StatePollingEnabled     bool   `json:"statePollingEnabled"`
+	StatePollingIntervalSec int    `json:"statePollingIntervalSec"`
 }
 
 const DevicesBucket = "Devices"
 const DefaultsBucket = "Defaults"
 const StateBucket = "State"
 const ConfigBucket = "Config"
+
+var DefaultDefaults = Defaults{Instance: "0000", TxPower: 0, PollPeriod: 1000}
+var DefaultConfig = Config{MainIp: nil, StatePollingEnabled: false, StatePollingIntervalSec: 600}
+var DefaultDevice = Device{DefaultDefaults, nil, DefaultConfig}
 
 type Registry struct {
 	db *bolt.DB
@@ -69,25 +73,50 @@ func (r *Registry) Close() error {
 	return r.db.Close()
 }
 
-func (r *Registry) GetOrCreate(id string) (Device, error) {
+func (r *Registry) Get(id string) (*Device, error) {
+	var d *Device = nil
+	var err error
+
+	err = r.db.View(func(tx *bolt.Tx) error {
+		err = assertDeviceExistsInTx(tx, id)
+		if err != nil {
+			return err
+		}
+		d, err = getDeviceInTx(tx, id)
+		return err
+	})
+
+	return d, err
+}
+
+func (r *Registry) Create(id string) (*Device, error) {
 	var d *Device = nil
 	var err error
 
 	err = r.db.Update(func(tx *bolt.Tx) error {
 		devices := tx.Bucket([]byte(DevicesBucket))
 		device := devices.Bucket([]byte(id))
-		if device == nil {
-			_, err = devices.CreateBucket([]byte(id))
-			if err != nil {
-				return err
-			}
+		if device != nil {
+			return errors.Errorf("device with id '%v' alredy exists", id)
+		}
+		_, err = devices.CreateBucket([]byte(id))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		err = putToDeviceBucket(tx, DefaultsBucket, id, DefaultDefaults)
+		if err != nil {
+			return err
+		}
+		err = putToDeviceBucket(tx, ConfigBucket, id, DefaultConfig)
+		if err != nil {
+			return err
 		}
 
 		d, err = getDeviceInTx(tx, id)
 		return err
 	})
 
-	return *d, err
+	return d, err
 }
 
 func (r *Registry) Contains(id string) (bool, error) {
@@ -103,32 +132,32 @@ func (r *Registry) Contains(id string) (bool, error) {
 	return found, err
 }
 
-func (r *Registry) GetDefaults(id string) (*Defaults, error) {
-	var d *Defaults = nil
-	var err error
-
-	err = r.db.View(func(tx *bolt.Tx) error {
-		d, err = getDefaultsInTx(tx, id)
-		return err
-	})
-
-	return d, err
-}
-
 func (r *Registry) UpdateDefaults(id string, defaults Defaults) error {
 	return r.db.Update(func(tx *bolt.Tx) error {
+		err := assertDeviceExistsInTx(tx, id)
+		if err != nil {
+			return err
+		}
 		return putToDeviceBucket(tx, DefaultsBucket, id, defaults)
 	})
 }
 
 func (r *Registry) UpdateState(id string, state State) error {
 	return r.db.Update(func(tx *bolt.Tx) error {
+		err := assertDeviceExistsInTx(tx, id)
+		if err != nil {
+			return err
+		}
 		return putToDeviceBucket(tx, StateBucket, id, state)
 	})
 }
 
 func (r *Registry) UpdateConfig(id string, config Config) error {
 	return r.db.Update(func(tx *bolt.Tx) error {
+		err := assertDeviceExistsInTx(tx, id)
+		if err != nil {
+			return err
+		}
 		return putToDeviceBucket(tx, ConfigBucket, id, config)
 	})
 }
@@ -153,14 +182,30 @@ func (r *Registry) GetDevices() (map[string]Device, error) {
 
 func (r *Registry) DeleteDevice(id string) error {
 	return r.db.Update(func(tx *bolt.Tx) error {
+		err := assertDeviceExistsInTx(tx, id)
+		if err != nil {
+			return err
+		}
+
 		b := tx.Bucket([]byte(DevicesBucket))
 		log.Debugf("Deleting device '%v'", id)
-		err := b.DeleteBucket([]byte(id))
+		err = b.DeleteBucket([]byte(id))
 		if err != nil {
 			return errors.Wrapf(err, "failed to delete device, id: '%v'", id)
 		}
+
 		return nil
 	})
+}
+
+func assertDeviceExistsInTx(tx *bolt.Tx, id string) error {
+	devices := tx.Bucket([]byte(DevicesBucket))
+	device := devices.Bucket([]byte(id))
+	if device == nil {
+		return errors.Errorf("device with id '%v' not found", id)
+	} else {
+		return nil
+	}
 }
 
 func getDeviceInTx(tx *bolt.Tx, id string) (*Device, error) {
@@ -185,7 +230,7 @@ func getDeviceInTx(tx *bolt.Tx, id string) (*Device, error) {
 		return nil, err
 	}
 	if state != nil {
-		d.State = *state
+		d.State = state
 	}
 
 	config, err := getConfigInTx(tx, id)

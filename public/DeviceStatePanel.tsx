@@ -8,9 +8,9 @@ import StatusMessage, { EmptyStatus } from './StatusMessage'
 import { postJSON } from './DeviceListItem'
 
 interface DeviceStatePanelProps {
-  state: DeviceState
+  state?: DeviceState
   deviceId: string
-  mainIp: string | undefined
+  mainIp: string
   onStateRefresh: (s: DeviceState) => void
 }
 
@@ -28,18 +28,18 @@ export default function DeviceStatePanel(props: DeviceStatePanelProps) {
       .catch(err => setStatus({ msg: err.toString(), isError: true, showProgress: false }))
   }
 
-  const isRefreshDisabled = () => props.mainIp === undefined
+  const isRefreshDisabled = () => props.mainIp === ''
 
   return <SubPanel heading={'State'}>
     <Grid item container xs={12}>
       <Grid item xs={4}>
-        <StateItem heading={'Instance'} values={props.state.instance}/>
+        <StateItem heading={'Instance'} values={props.state?.instance}/>
       </Grid>
       <Grid item xs={4}>
         <StateItem heading={'Voltage'} values={voltageString(props.state)}/>
       </Grid>
       <Grid item xs={4}>
-        <StateItem heading={'RLOC16'} values={props.state.parent?.rloc16}/>
+        <StateItem heading={'RLOC16'} values={props.state?.parent?.rloc16}/>
       </Grid>
     </Grid>
     <Grid item container xs={12}>
@@ -47,14 +47,14 @@ export default function DeviceStatePanel(props: DeviceStatePanelProps) {
         <StateItem heading={'Link Quality In/Out'} values={linkQualityString(props.state)}/>
       </Grid>
       <Grid item xs={4}>
-        <StateItem heading={'Latest RSSI'} values={rssiString(props.state.parent?.latestRssi)}/>
+        <StateItem heading={'Latest RSSI'} values={rssiString(props.state?.parent?.latestRssi)}/>
       </Grid>
       <Grid item xs={4}>
-        <StateItem heading={'Avg RSSI'} values={rssiString(props.state.parent?.avgRssi)}/>
+        <StateItem heading={'Avg RSSI'} values={rssiString(props.state?.parent?.avgRssi)}/>
       </Grid>
     </Grid>
     <Grid item xs={12}>
-      <StateItem heading={'Addresses'} values={props.state.addresses}/>
+      <StateItem heading={'Addresses'} values={props.state?.addresses}/>
     </Grid>
     <Grid item container spacing={2} xs={12} alignItems={'center'}>
       <Grid item>
@@ -67,12 +67,12 @@ export default function DeviceStatePanel(props: DeviceStatePanelProps) {
   </SubPanel>
 }
 
-function voltageString(s: DeviceState) {
-  return s.vcc !== undefined ? (s.vcc / 1000).toFixed(3) + ' V' : ''
+function voltageString(s?: DeviceState) {
+  return s?.vcc !== undefined ? (s.vcc / 1000).toFixed(3) + ' V' : ''
 }
 
-function linkQualityString(s: DeviceState) {
-  return s.parent !== undefined ? `${s.parent.linkQualityIn}/${s.parent.linkQualityOut}` : ''
+function linkQualityString(s?: DeviceState) {
+  return s?.parent !== undefined ? `${s.parent.linkQualityIn}/${s.parent.linkQualityOut}` : ''
 }
 
 function rssiString(rssi: number | undefined) {
