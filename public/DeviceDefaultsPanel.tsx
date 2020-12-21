@@ -11,7 +11,7 @@ import InputLabel from '@material-ui/core/InputLabel'
 import Select from '@material-ui/core/Select'
 import MenuItem from '@material-ui/core/MenuItem'
 import isEqual from 'lodash/isEqual'
-import StatusMessage, { EmptyStatus, Status } from './StatusMessage'
+import StatusMessage, { EmptyStatus } from './StatusMessage'
 import { DeviceDefaults } from './DeviceList'
 import InputAdornment from '@material-ui/core/InputAdornment'
 import { postJSON } from './DeviceListItem'
@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
   }
 }))
 
-export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, deviceId: string, mainIp: string | undefined, onSaveDefaults: (s: DeviceDefaults) => Promise<void> }) {
+export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, deviceId: string, mainIp: string, onSaveDefaults: (s: DeviceDefaults) => Promise<void> }) {
   const classes = useStyles()
 
   const [defaults, setDefaults] = useState(props.defaults)
@@ -38,31 +38,17 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
 
   const onInstanceChange = (instance: string, err: boolean) => {
     setInstanceError(err)
-    if (instance !== '') {
-      setDefaults({ ...defaults, instance })
-    } else {
-      setDefaults(prev => {
-        const { instance, ...rest } = prev
-        return rest
-      })
-    }
+    setDefaults({ ...defaults, instance })
   }
 
   const onTxPowerSelected = (e: ChangeEvent<HTMLSelectElement>) => {
     setDefaults({ ...defaults, txPower: parseInt(e.target.value) })
   }
 
-  const onPollPeriodChange = (period: number | undefined, err: boolean) => {
+  const onPollPeriodChange = (period: number, err: boolean) => {
     setPollError(err)
     if (!err) {
-      if (period !== undefined) {
-        setDefaults({ ...defaults, pollPeriod: period })
-      } else {
-        setDefaults(prev => {
-          const { pollPeriod, ...rest } = prev
-          return rest
-        })
-      }
+      setDefaults({ ...defaults, pollPeriod: period })
     }
   }
 
@@ -82,7 +68,7 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
   }
 
   const isSaveDisabled = () => pollError || instanceError || isEqual(defaults, props.defaults)
-  const isPushDisabled = () => props.mainIp === undefined || !isEqual(defaults, props.defaults)
+  const isPushDisabled = () => props.mainIp === '' || !isEqual(defaults, props.defaults)
 
   return <SubPanel heading={'Defaults'}>
     <Grid item container spacing={3} className={classes.defaultsPanelInputs}>
@@ -110,8 +96,8 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
   </SubPanel>
 }
 
-function InstanceTextField(props: { instance?: string, onInstanceChange: (instance: string, err: boolean) => void }) {
-  const regex = /^[\w]{2,4}$|^$/
+function InstanceTextField(props: { instance: string, onInstanceChange: (instance: string, err: boolean) => void }) {
+  const regex = /^[\w]{2,4}$/
   const [err, setErr] = useState(false)
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -121,22 +107,17 @@ function InstanceTextField(props: { instance?: string, onInstanceChange: (instan
     props.onInstanceChange(v, hasError)
   }
 
-  return <TextField
-    label="Instance"
-    error={err}
-    value={props.instance ? props.instance : ''}
-    onChange={onChange}
-    InputLabelProps={{ shrink: true }}
-  />
+  return <TextField label="Instance" error={err} value={props.instance} onChange={onChange}
+                    InputLabelProps={{ shrink: true }}/>
 }
 
-function TxPowerSelect(props: { txPower?: number, onTxPowerSelected: SelectInputProps['onChange'] }) {
+function TxPowerSelect(props: { txPower: number, onTxPowerSelected: SelectInputProps['onChange'] }) {
   const classes = useStyles()
 
   return <FormControl fullWidth>
     <InputLabel shrink={true} id="txpower-label">TX Power</InputLabel>
     <Select labelId="txpower-label"
-            value={props.txPower !== undefined ? props.txPower : ''}
+            value={props.txPower}
             onChange={props.onTxPowerSelected}
             endAdornment={
               <InputAdornment position="start" className={classes.txPowerSelectAdornment}>dBm</InputAdornment>
@@ -154,7 +135,7 @@ function TxPowerSelect(props: { txPower?: number, onTxPowerSelected: SelectInput
   </FormControl>
 }
 
-function PollPeriodAutoComplete(props: { pollPeriod?: number, onPollPeriodChange: (period: number | undefined, err: boolean) => void }) {
+function PollPeriodAutoComplete(props: { pollPeriod: number, onPollPeriodChange: (period: number, err: boolean) => void }) {
   const [err, setErr] = useState(false)
 
   const onInputChange = (e: React.ChangeEvent, val: string) => {
@@ -162,7 +143,7 @@ function PollPeriodAutoComplete(props: { pollPeriod?: number, onPollPeriodChange
     if (valid) {
       props.onPollPeriodChange(parseValidPollPeriod(val), false)
     } else {
-      props.onPollPeriodChange(undefined, true)
+      props.onPollPeriodChange(NaN, true)
     }
     setErr(!valid)
   }
@@ -170,7 +151,7 @@ function PollPeriodAutoComplete(props: { pollPeriod?: number, onPollPeriodChange
   return <Autocomplete
     freeSolo
     options={['200', '500', '1000', '2000', '5000', '10000', '15000']}
-    value={props.pollPeriod !== undefined ? props.pollPeriod.toString() : ''}
+    value={props.pollPeriod.toString()}
     onInputChange={onInputChange}
     filterOptions={(opts, state) => opts}
     renderInput={(params) => (
@@ -189,14 +170,14 @@ const pollPeriodRegex = /^([\d]+)([\s]*$)/
 
 function isValidPollPeriod(val: string): boolean {
   const matches = val.match(pollPeriodRegex)
-  return (matches !== null && parseInt(matches[1]) > 0) || val === ''
+  return (matches !== null && parseInt(matches[1]) > 0)
 }
 
-function parseValidPollPeriod(val: string): number | undefined {
+function parseValidPollPeriod(val: string): number {
   const matches = val.match(pollPeriodRegex)
   if (matches !== null) {
     return parseInt(matches[1])
   } else {
-    return undefined
+    throw new Error(`Invalid poll period: ${val}`)
   }
 }

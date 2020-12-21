@@ -50,7 +50,7 @@ export default function DeviceListItem(props: DeviceListItemProps) {
                           mainIp={props.device.config.mainIp} onStateRefresh={onStateRefresh}/>
         <DeviceDefaultsPanel defaults={props.device.defaults} deviceId={props.deviceId}
                              mainIp={props.device.config.mainIp} onSaveDefaults={onSaveDefaults}/>
-        <DeviceConfigPanel config={props.device.config} state={props.device.state} onSaveConfig={onSaveConfig}/>
+        <DeviceConfigPanel config={props.device.config} addresses={props.device.state?.addresses} onSaveConfig={onSaveConfig}/>
       </Grid>
     </Paper>
   </Grid>
