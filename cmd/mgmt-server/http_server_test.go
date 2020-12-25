@@ -5,6 +5,7 @@ import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	http_routes "github.com/chacal/thread-mgmt-server/pkg/mgmt_routes/http"
 	"github.com/chacal/thread-mgmt-server/pkg/mocks"
+	"github.com/chacal/thread-mgmt-server/pkg/state_poller_service"
 	T "github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
@@ -135,7 +136,10 @@ func TestV1PostDefaults(t *testing.T) {
 }
 
 func TestV1PostConfig(t *testing.T) {
-	router, reg := setup(t)
+	mockCtrl := gomock.NewController(t)
+	mockSps := mocks.NewMockStatePollerService(mockCtrl)
+
+	router, reg := setupWithSps(t, mockSps)
 	tests := map[string]struct {
 		id       string
 		payload  string
@@ -156,6 +160,7 @@ func TestV1PostConfig(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			_, _ = reg.Create(tc.id)
+			mockSps.EXPECT().Refresh()
 			T.AssertOK(t, T.RecordPost(router, "/v1/devices/"+tc.id+"/config", tc.payload))
 			device, err := reg.Get(tc.id)
 			require.NoError(t, err)
@@ -165,10 +170,15 @@ func TestV1PostConfig(t *testing.T) {
 }
 
 func TestV1DeleteDevice(t *testing.T) {
-	router, reg := setup(t)
+	mockCtrl := gomock.NewController(t)
+	mockSps := mocks.NewMockStatePollerService(mockCtrl)
+
+	router, reg := setupWithSps(t, mockSps)
 
 	_, err := reg.Create("12345")
 	require.NoError(t, err)
+
+	mockSps.EXPECT().Refresh()
 
 	T.AssertOK(t, T.RecordDelete(router, "/v1/devices/12345"))
 
@@ -238,8 +248,18 @@ func setup(t *testing.T) (*gin.Engine, *device_registry.Registry) {
 
 func setupWithGw(t *testing.T, gw device_gateway.DeviceGateway) (*gin.Engine, *device_registry.Registry) {
 	reg := device_registry.CreateTestRegistry(t)
+	sps := state_poller_service.Create(reg)
 	router := gin.Default()
-	http_routes.RegisterRoutes(router, reg, gw)
+	http_routes.RegisterRoutes(router, reg, gw, sps)
+
+	return router, reg
+}
+
+func setupWithSps(t *testing.T, sps state_poller_service.StatePollerService) (*gin.Engine, *device_registry.Registry) {
+	reg := device_registry.CreateTestRegistry(t)
+	gw := device_gateway.Create()
+	router := gin.Default()
+	http_routes.RegisterRoutes(router, reg, gw, sps)
 
 	return router, reg
 }

@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_gateway"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
+	"github.com/chacal/thread-mgmt-server/pkg/state_poller_service"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -14,15 +15,16 @@ import (
 	"strings"
 )
 
-func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry, gw device_gateway.DeviceGateway) error {
+func RegisterRoutes(router *gin.Engine, reg *device_registry.Registry, gw device_gateway.DeviceGateway,
+	sps state_poller_service.StatePollerService) error {
 	router.Use(errorHandlingMiddleware)
 	router.Use(cors.Default())
-	router.GET("/v1/devices", handlerWithDeps(reg, gw, getV1Devices))
-	router.POST("/v1/devices/:device_id/defaults", handlerWithDeps(reg, gw, postV1Defaults))
-	router.POST("/v1/devices/:device_id/config", handlerWithDeps(reg, gw, postV1Config))
-	router.POST("/v1/devices/:device_id/push", handlerWithDeps(reg, gw, postV1DevicesPushDefaults))
-	router.POST("/v1/devices/:device_id/refresh_state", handlerWithDeps(reg, gw, postV1DevicesRefreshState))
-	router.DELETE("/v1/devices/:device_id", handlerWithDeps(reg, gw, deleteV1Device))
+	router.GET("/v1/devices", handlerWithReg(reg, getV1Devices))
+	router.POST("/v1/devices/:device_id/defaults", handlerWithReg(reg, postV1Defaults))
+	router.POST("/v1/devices/:device_id/config", handlerWithDeps(reg, gw, sps, postV1Config))
+	router.POST("/v1/devices/:device_id/push", handlerWithDeps(reg, gw, sps, postV1DevicesPushDefaults))
+	router.POST("/v1/devices/:device_id/refresh_state", handlerWithDeps(reg, gw, sps, postV1DevicesRefreshState))
+	router.DELETE("/v1/devices/:device_id", handlerWithDeps(reg, gw, sps, deleteV1Device))
 	return serveStaticFromDir(router, "dist")
 }
 
@@ -30,7 +32,7 @@ type Id struct {
 	Id string `uri:"device_id" binding:"required"`
 }
 
-func getV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+func getV1Devices(reg *device_registry.Registry, ctx *gin.Context) {
 	devices, err := reg.GetDevices()
 	if err != nil {
 		ctx.Error(err)
@@ -39,7 +41,7 @@ func getV1Devices(reg *device_registry.Registry, gw device_gateway.DeviceGateway
 	ctx.IndentedJSON(http.StatusOK, devices)
 }
 
-func postV1Defaults(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+func postV1Defaults(reg *device_registry.Registry, ctx *gin.Context) {
 	var id Id
 	if err := ctx.ShouldBindUri(&id); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
@@ -61,7 +63,7 @@ func postV1Defaults(reg *device_registry.Registry, gw device_gateway.DeviceGatew
 	ctx.Status(http.StatusOK)
 }
 
-func postV1Config(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+func postV1Config(reg *device_registry.Registry, gw device_gateway.DeviceGateway, sps state_poller_service.StatePollerService, ctx *gin.Context) {
 	var id Id
 	if err := ctx.ShouldBindUri(&id); err != nil {
 		ctx.AbortWithError(http.StatusBadRequest, errors.WithStack(err))
@@ -80,10 +82,16 @@ func postV1Config(reg *device_registry.Registry, gw device_gateway.DeviceGateway
 		return
 	}
 
+	err = sps.Refresh()
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
 	ctx.Status(http.StatusOK)
 }
 
-func deleteV1Device(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+func deleteV1Device(reg *device_registry.Registry, gw device_gateway.DeviceGateway, sps state_poller_service.StatePollerService, ctx *gin.Context) {
 	var id Id
 	if err := ctx.ShouldBindUri(&id); err != nil {
 		ctx.Error(errors.WithStack(err))
@@ -96,6 +104,12 @@ func deleteV1Device(reg *device_registry.Registry, gw device_gateway.DeviceGatew
 		return
 	}
 
+	err = sps.Refresh()
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
 	ctx.Status(http.StatusOK)
 }
 
@@ -103,7 +117,7 @@ type DeviceDestination struct {
 	Address net.IP `json:"address" binding:"required"`
 }
 
-func postV1DevicesPushDefaults(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+func postV1DevicesPushDefaults(reg *device_registry.Registry, gw device_gateway.DeviceGateway, sps state_poller_service.StatePollerService, ctx *gin.Context) {
 	id, dst, err := assertDeviceFromRequestExists(reg, ctx)
 	if err != nil {
 		return
@@ -124,7 +138,7 @@ func postV1DevicesPushDefaults(reg *device_registry.Registry, gw device_gateway.
 	ctx.Status(http.StatusOK)
 }
 
-func postV1DevicesRefreshState(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context) {
+func postV1DevicesRefreshState(reg *device_registry.Registry, gw device_gateway.DeviceGateway, sps state_poller_service.StatePollerService, ctx *gin.Context) {
 	id, dst, err := assertDeviceFromRequestExists(reg, ctx)
 	if err != nil {
 		return
@@ -171,13 +185,6 @@ func assertDeviceFromRequestExists(reg *device_registry.Registry, ctx *gin.Conte
 	return id.Id, dst.Address, nil
 }
 
-type depHandlerFunc = func(reg *device_registry.Registry, gw device_gateway.DeviceGateway, ctx *gin.Context)
-
-func handlerWithDeps(reg *device_registry.Registry, gw device_gateway.DeviceGateway, f depHandlerFunc) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		f(reg, gw, ctx)
-	}
-}
 
 func errorHandlingMiddleware(ctx *gin.Context) {
 	ctx.Next()

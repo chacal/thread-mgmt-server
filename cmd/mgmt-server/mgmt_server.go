@@ -5,6 +5,7 @@ import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	coap_routes "github.com/chacal/thread-mgmt-server/pkg/mgmt_routes/coap"
 	http_routes "github.com/chacal/thread-mgmt-server/pkg/mgmt_routes/http"
+	"github.com/chacal/thread-mgmt-server/pkg/state_poller_service"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"github.com/plgd-dev/go-coap/v2/mux"
@@ -50,9 +51,10 @@ func (s *MgmtCoapServer) Stop() {
 	s.conn.Close()
 }
 
-func NewHttpServer(opts Options, reg *device_registry.Registry, gw device_gateway.DeviceGateway) (*http.Server, error) {
+func NewHttpServer(opts Options, reg *device_registry.Registry, gw device_gateway.DeviceGateway,
+	sps state_poller_service.StatePollerService) (*http.Server, error) {
 	router := gin.Default()
-	err := http_routes.RegisterRoutes(router, reg, gw)
+	err := http_routes.RegisterRoutes(router, reg, gw, sps)
 	if err != nil {
 		return nil, err
 	}
