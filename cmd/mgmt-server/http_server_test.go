@@ -88,6 +88,8 @@ func TestV1GetDevices(t *testing.T) {
 					"addresses": [
 						"ffff::1"
 					],
+					"txPower": -4,
+					"pollPeriod": 1000,
 					"parent": {
 						"rloc16": "0x4400",
 						"linkQualityIn": 3,
@@ -211,6 +213,8 @@ func TestV1PostRefreshState(t *testing.T) {
 				"addresses": [
 					"ffff::1"
 				],
+				"txPower": -4,
+				"pollPeriod": 1000,
 				"parent": {
 					"rloc16": "0x4400",
 					"linkQualityIn": 3,

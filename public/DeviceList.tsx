@@ -26,6 +26,8 @@ export interface DeviceState {
   addresses: string[]
   vcc: number
   instance: string
+  txPower: number
+  pollPeriod: number
   parent: ParentInfo
 }
 

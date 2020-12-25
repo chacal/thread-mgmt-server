@@ -39,18 +39,26 @@ export default function DeviceStatePanel(props: DeviceStatePanelProps) {
         <StateItem heading={'Voltage'} values={voltageString(props.state)}/>
       </Grid>
       <Grid item xs={4}>
-        <StateItem heading={'RLOC16'} values={props.state?.parent?.rloc16}/>
+        <StateItem heading={'Tx Power'} values={props.state?.txPower?.toString()}/>
       </Grid>
     </Grid>
     <Grid item container xs={12}>
       <Grid item xs={4}>
-        <StateItem heading={'Link Quality In/Out'} values={linkQualityString(props.state)}/>
+        <StateItem heading={'Poll Period'} values={pollPeriodString(props.state)}/>
       </Grid>
       <Grid item xs={4}>
         <StateItem heading={'Latest RSSI'} values={rssiString(props.state?.parent?.latestRssi)}/>
       </Grid>
       <Grid item xs={4}>
         <StateItem heading={'Avg RSSI'} values={rssiString(props.state?.parent?.avgRssi)}/>
+      </Grid>
+    </Grid>
+    <Grid item container xs={12}>
+      <Grid item xs={4}>
+        <StateItem heading={'RLOC16'} values={props.state?.parent?.rloc16}/>
+      </Grid>
+      <Grid item xs={4}>
+        <StateItem heading={'Link Quality In/Out'} values={linkQualityString(props.state)}/>
       </Grid>
     </Grid>
     <Grid item xs={12}>
@@ -76,5 +84,9 @@ function linkQualityString(s?: DeviceState) {
 }
 
 function rssiString(rssi: number | undefined) {
-  return rssi !== undefined ? `${rssi}dBm` : ''
+  return rssi !== undefined ? `${rssi} dBm` : ''
+}
+
+function pollPeriodString(s?: DeviceState) {
+  return s?.pollPeriod !== undefined ? s.pollPeriod.toString() + ' ms' : ''
 }

@@ -9,7 +9,9 @@ import (
 
 var ip = net.ParseIP("ffff::1")
 
-var testState = State{[]net.IP{ip}, 2970, "A100", ParentInfo{"0x4400", 3, 2, -65, -63}}
+var testState = State{[]net.IP{ip}, 2970, "A100", -4, 1000,
+	ParentInfo{"0x4400", 3, 2, -65, -63},
+}
 
 func TestRegistry_GetAndCreate(t *testing.T) {
 	reg := CreateTestRegistry(t)

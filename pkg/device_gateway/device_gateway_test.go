@@ -16,7 +16,7 @@ import (
 
 var LOCAL_IP = gonet.ParseIP("127.0.0.1")
 var ip = gonet.ParseIP("ffff::1")
-var testState = device_registry.State{[]gonet.IP{ip}, 2970, "A100",
+var testState = device_registry.State{[]gonet.IP{ip}, 2970, "A100", 0, 1000,
 	device_registry.ParentInfo{"0x4400", 3, 2, -65, -63},
 }
 
@@ -41,6 +41,8 @@ func TestGateway_FetchState(t *testing.T) {
 				"addresses": [
 					"ffff::1"
 				],
+				"txPower": 0,
+				"pollPeriod": 1000,
 				"parent": {
 					"rloc16": "0x4400",
 					"linkQualityIn": 3,

@@ -30,10 +30,12 @@ type ParentInfo struct {
 }
 
 type State struct {
-	Addresses []net.IP   `json:"addresses"`
-	Vcc       int        `json:"vcc"`
-	Instance  string     `json:"instance"`
-	Parent    ParentInfo `json:"parent"`
+	Addresses  []net.IP   `json:"addresses"`
+	Vcc        int        `json:"vcc"`
+	Instance   string     `json:"instance"`
+	TxPower    int        `json:"txPower"`
+	PollPeriod int        `json:"pollPeriod"`
+	Parent     ParentInfo `json:"parent"`
 }
 
 type Config struct {
