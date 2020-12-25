@@ -69,12 +69,6 @@ func TestPostV1State(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, *dev.State, testState)
 
-		// TODO: Test error with missing parameters
-		/*		postJSON(t, "/v1/state/AABBCC", `{}`)
-				dev, err = reg.Get("AABBCC")
-				assert.NoError(t, err)
-				assert.Equal(t, dev, device_registry.Device{})
-		*/
 		done <- 1
 	})
 }
