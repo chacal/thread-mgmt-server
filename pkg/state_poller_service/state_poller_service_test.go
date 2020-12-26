@@ -12,7 +12,7 @@ import (
 )
 
 var ip = net.ParseIP("ffff::1")
-var ip2 = net.ParseIP("ffff::1")
+var ip2 = net.ParseIP("ffff::2")
 
 func TestCreate(t *testing.T) {
 	reg := device_registry.CreateTestRegistry(t)
