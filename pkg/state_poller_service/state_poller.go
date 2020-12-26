@@ -52,6 +52,8 @@ func (sp *statePoller) Refresh(pollingIntervalSec int, ip net.IP) error {
 	}
 	if sp.statePollingInterval != duration || !sp.ip.Equal(ip) {
 		log.Infof("Refreshing poller, interval: %v ip: %v", duration, ip)
+		sp.ticker.Reset(duration)
+		sp.ip = ip
 	}
 	return nil
 }
