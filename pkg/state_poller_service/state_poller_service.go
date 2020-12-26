@@ -71,7 +71,7 @@ func (sp *statePollerService) createPoller(deviceId string, pollingIntervalSec i
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	poller := sp.pollerCreator(deviceId, duration, ip)
+	poller := sp.pollerCreator(sp.reg, deviceId, duration, ip)
 	sp.pollers[deviceId] = poller
 	poller.Start()
 	return nil
@@ -81,8 +81,4 @@ func (sp *statePollerService) removePoller(deviceId string) {
 	poller := sp.pollers[deviceId]
 	poller.Stop()
 	delete(sp.pollers, deviceId)
-}
-
-func defaultStatePollerCreator(deviceId string, pollingInterval time.Duration, ip net.IP) StatePoller {
-	return &statePoller{deviceId, pollingInterval, ip}
 }
