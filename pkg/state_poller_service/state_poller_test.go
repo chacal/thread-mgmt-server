@@ -6,7 +6,6 @@ import (
 	"github.com/chacal/thread-mgmt-server/pkg/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"net"
 	"testing"
 	"time"
@@ -24,7 +23,7 @@ var testState = device_registry.State{
 func TestStatePoller_Start(t *testing.T) {
 	reg, mockGw := create(t)
 
-	poller := createPoller(reg, mockGw, duration(t, "200ms"))
+	poller := createPoller(reg, mockGw, 200*time.Millisecond)
 	defer poller.Stop()
 	dev, _ := reg.Create("12345")
 	assert.Equal(t, (*device_registry.State)(nil), dev.State)
@@ -52,7 +51,7 @@ func TestStatePoller_Start(t *testing.T) {
 func TestStatePoller_Refresh(t *testing.T) {
 	reg, mockGw := create(t)
 
-	poller := createPoller(reg, mockGw, duration(t, "200ms"))
+	poller := createPoller(reg, mockGw, 200*time.Millisecond)
 	defer poller.Stop()
 	_, _ = reg.Create("12345")
 
@@ -72,7 +71,7 @@ func TestStatePoller_Refresh(t *testing.T) {
 func TestStatePoller_Stop(t *testing.T) {
 	reg, mockGw := create(t)
 
-	poller := createPoller(reg, mockGw, duration(t, "200ms"))
+	poller := createPoller(reg, mockGw, 200*time.Millisecond)
 	_, _ = reg.Create("12345")
 
 	mockGw.EXPECT().FetchState(gomock.Eq(ip)).Return(testState, nil)
@@ -101,10 +100,4 @@ func createPoller(reg *device_registry.Registry, gw device_gateway.DeviceGateway
 	return &statePoller{"12345", interval, ip, nil,
 		gw, reg, func() time.Duration { return 0 },
 	}
-}
-
-func duration(t *testing.T, duration string) time.Duration {
-	d, err := time.ParseDuration(duration)
-	require.NoError(t, err)
-	return d
 }

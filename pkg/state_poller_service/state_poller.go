@@ -3,10 +3,8 @@ package state_poller_service
 //go:generate mockgen -destination=../mocks/mock_state_poller.go -package=mocks github.com/chacal/thread-mgmt-server/pkg/state_poller_service StatePoller
 
 import (
-	"fmt"
 	"github.com/chacal/thread-mgmt-server/pkg/device_gateway"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"net"
@@ -17,7 +15,7 @@ var maxSleepRandomnessSeconds = 60
 
 type StatePoller interface {
 	Start()
-	Refresh(pollingIntervalSec int, ip net.IP) error
+	Refresh(pollingIntervalSec int, ip net.IP)
 	Stop()
 }
 
@@ -47,11 +45,8 @@ func (sp *statePoller) Start() {
 	sp.timer = time.AfterFunc(initialSleep, sp.pollDeviceOnce)
 }
 
-func (sp *statePoller) Refresh(pollingIntervalSec int, ip net.IP) error {
-	duration, err := time.ParseDuration(fmt.Sprintf("%vs", pollingIntervalSec))
-	if err != nil {
-		return errors.WithStack(err)
-	}
+func (sp *statePoller) Refresh(pollingIntervalSec int, ip net.IP) {
+	duration := time.Duration(pollingIntervalSec) * time.Second
 	if sp.statePollingInterval != duration || !sp.ip.Equal(ip) {
 		log.Infof("Refreshing poller, interval: %v ip: %v", duration, ip)
 		// Stop & drain timer
@@ -62,7 +57,6 @@ func (sp *statePoller) Refresh(pollingIntervalSec int, ip net.IP) error {
 		sp.timer.Reset(sp.statePollingInterval)
 		sp.ip = ip
 	}
-	return nil
 }
 
 func (sp *statePoller) Stop() {

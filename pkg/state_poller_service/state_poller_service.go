@@ -3,9 +3,7 @@ package state_poller_service
 //go:generate mockgen -destination=../mocks/mock_state_poller_service.go -package=mocks github.com/chacal/thread-mgmt-server/pkg/state_poller_service StatePollerService
 
 import (
-	"fmt"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
-	"github.com/pkg/errors"
 	"net"
 	"time"
 )
@@ -41,15 +39,9 @@ func (sp *statePollerService) Refresh() error {
 		poller, pollerExists := sp.pollers[deviceId]
 
 		if device.Config.StatePollingEnabled && !pollerExists {
-			err = sp.createPoller(deviceId, device.Config.StatePollingIntervalSec, device.Config.MainIp)
-			if err != nil {
-				return nil
-			}
+			sp.createPoller(deviceId, device.Config.StatePollingIntervalSec, device.Config.MainIp)
 		} else if device.Config.StatePollingEnabled && pollerExists {
-			err = poller.Refresh(device.Config.StatePollingIntervalSec, device.Config.MainIp)
-			if err != nil {
-				return nil
-			}
+			poller.Refresh(device.Config.StatePollingIntervalSec, device.Config.MainIp)
 		} else if !device.Config.StatePollingEnabled && pollerExists {
 			sp.removePoller(deviceId)
 		}
@@ -66,15 +58,11 @@ func (sp *statePollerService) Refresh() error {
 	return nil
 }
 
-func (sp *statePollerService) createPoller(deviceId string, pollingIntervalSec int, ip net.IP) error {
-	duration, err := time.ParseDuration(fmt.Sprintf("%vs", pollingIntervalSec))
-	if err != nil {
-		return errors.WithStack(err)
-	}
+func (sp *statePollerService) createPoller(deviceId string, pollingIntervalSec int, ip net.IP) {
+	duration := time.Duration(pollingIntervalSec) * time.Second
 	poller := sp.pollerCreator(sp.reg, deviceId, duration, ip)
 	sp.pollers[deviceId] = poller
 	poller.Start()
-	return nil
 }
 
 func (sp *statePollerService) removePoller(deviceId string) {

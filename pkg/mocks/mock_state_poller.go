@@ -34,11 +34,9 @@ func (m *MockStatePoller) EXPECT() *MockStatePollerMockRecorder {
 }
 
 // Refresh mocks base method
-func (m *MockStatePoller) Refresh(arg0 int, arg1 net.IP) error {
+func (m *MockStatePoller) Refresh(arg0 int, arg1 net.IP) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Refresh", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "Refresh", arg0, arg1)
 }
 
 // Refresh indicates an expected call of Refresh
