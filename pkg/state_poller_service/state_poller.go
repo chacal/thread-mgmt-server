@@ -8,9 +8,12 @@ import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"net"
 	"time"
 )
+
+var maxSleepRandomnessSeconds = 60
 
 type StatePoller interface {
 	Start()
@@ -24,25 +27,24 @@ type statePoller struct {
 	deviceId             string
 	statePollingInterval time.Duration
 	ip                   net.IP
-	ticker               *time.Ticker
-	done                 chan bool
+	timer                *time.Timer
 	gw                   device_gateway.DeviceGateway
 	reg                  *device_registry.Registry
+	sleepRandomizer      func() time.Duration
 }
 
 func defaultStatePollerCreator(reg *device_registry.Registry, deviceId string, pollingInterval time.Duration, ip net.IP) StatePoller {
-	return &statePoller{deviceId, pollingInterval, ip,
-		nil, make(chan bool), device_gateway.Create(), reg,
+	return &statePoller{deviceId, pollingInterval, ip, nil, device_gateway.Create(),
+		reg, nextSleepRandomDuration,
 	}
 }
 
 func (sp *statePoller) Start() {
-	log.Infof("Starting poller for device %v with interval %v", sp.deviceId, sp.statePollingInterval)
-	sp.ticker = time.NewTicker(sp.statePollingInterval)
-	go func() {
-		sp.pollDeviceOnce()
-		sp.pollWithTicker()
-	}()
+	initialSleep := sp.sleepRandomizer()
+	log.Infof("Starting poller for device %v with interval %v and initial sleep %v",
+		sp.deviceId, sp.statePollingInterval, initialSleep,
+	)
+	sp.timer = time.AfterFunc(initialSleep, sp.pollDeviceOnce)
 }
 
 func (sp *statePoller) Refresh(pollingIntervalSec int, ip net.IP) error {
@@ -52,7 +54,12 @@ func (sp *statePoller) Refresh(pollingIntervalSec int, ip net.IP) error {
 	}
 	if sp.statePollingInterval != duration || !sp.ip.Equal(ip) {
 		log.Infof("Refreshing poller, interval: %v ip: %v", duration, ip)
-		sp.ticker.Reset(duration)
+		// Stop & drain timer
+		if !sp.timer.Stop() {
+			<-sp.timer.C
+		}
+		sp.statePollingInterval = duration
+		sp.timer.Reset(sp.statePollingInterval)
 		sp.ip = ip
 	}
 	return nil
@@ -60,27 +67,18 @@ func (sp *statePoller) Refresh(pollingIntervalSec int, ip net.IP) error {
 
 func (sp *statePoller) Stop() {
 	log.Infof("Stopping poller for device %v", sp.deviceId)
-	sp.ticker.Stop()
-	sp.done <- true
-}
-
-func (sp *statePoller) pollWithTicker() {
-	for {
-		select {
-		case <-sp.done:
-			log.Infof("Poller for %v done.", sp.deviceId)
-			return
-		case <-sp.ticker.C:
-			sp.pollDeviceOnce()
-		}
-	}
+	sp.timer.Stop()
 }
 
 func (sp *statePoller) pollDeviceOnce() {
-	log.Infof("Polling device %v", sp.deviceId)
+	var nextSleep = sp.statePollingInterval + sp.sleepRandomizer()
+	log.Infof("Polling device %v, next sleep %v", sp.deviceId, nextSleep)
+	defer sp.timer.Reset(nextSleep)
+
 	state, err := sp.gw.FetchState(sp.ip)
 	if err != nil {
 		log.Errorf("failed to fetch state, deviceId: %v, ip: %v, error: %v", sp.deviceId, sp.ip, err)
+		return
 	}
 
 	log.Infof("Updating state for device %v: %v", sp.deviceId, state)
@@ -88,4 +86,8 @@ func (sp *statePoller) pollDeviceOnce() {
 	if err != nil {
 		log.Errorf("failed to update state, deviceId: %v, error: %v", sp.deviceId, err)
 	}
+}
+
+func nextSleepRandomDuration() time.Duration {
+	return time.Duration(rand.Intn(maxSleepRandomnessSeconds)) * time.Second
 }

@@ -42,7 +42,7 @@ func TestStatePoller_Start(t *testing.T) {
 	testState2.Vcc = 3000
 	mockGw.EXPECT().FetchState(gomock.Eq(ip)).Return(testState2, nil)
 
-	// Wait for the first ticker poll
+	// Wait for the first timer poll
 	time.Sleep(200 * time.Millisecond)
 
 	dev, _ = reg.Get("12345")
@@ -83,7 +83,7 @@ func TestStatePoller_Stop(t *testing.T) {
 
 	poller.Stop()
 
-	// Wait for ticker poll (shouldn't happen)
+	// Wait for timer poll (shouldn't happen)
 	time.Sleep(300 * time.Millisecond)
 }
 
@@ -98,7 +98,9 @@ func create(t *testing.T) (*device_registry.Registry, *mocks.MockDeviceGateway) 
 }
 
 func createPoller(reg *device_registry.Registry, gw device_gateway.DeviceGateway, interval time.Duration) *statePoller {
-	return &statePoller{"12345", interval, ip, nil, make(chan bool), gw, reg}
+	return &statePoller{"12345", interval, ip, nil,
+		gw, reg, func() time.Duration { return 0 },
+	}
 }
 
 func duration(t *testing.T, duration string) time.Duration {

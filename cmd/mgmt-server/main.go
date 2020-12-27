@@ -7,6 +7,8 @@ import (
 	"github.com/chacal/thread-mgmt-server/pkg/server"
 	"github.com/chacal/thread-mgmt-server/pkg/state_poller_service"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
+	"time"
 )
 
 type Options struct {
@@ -16,6 +18,7 @@ type Options struct {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	opts := Options{}
 	server.ParseOptions(&opts)
 	logOptions(opts)
