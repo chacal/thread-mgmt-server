@@ -18,6 +18,7 @@ type Options struct {
 }
 
 func main() {
+	log.SetFormatter(&log.TextFormatter{ForceColors: true, DisableTimestamp: true})
 	rand.Seed(time.Now().UnixNano())
 	opts := Options{}
 	server.ParseOptions(&opts)

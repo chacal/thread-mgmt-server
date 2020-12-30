@@ -24,6 +24,7 @@ type DiscoveryResponse struct {
 }
 
 func main() {
+	log.SetFormatter(&log.TextFormatter{ForceColors: true, DisableTimestamp: true})
 	opts := Options{}
 	server.ParseOptions(&opts)
 	LogOptions(opts)
