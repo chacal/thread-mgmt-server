@@ -50,6 +50,8 @@ RUN npx webpack --mode production
 ##################################
 FROM alpine:latest
 
+ENV GIN_MODE=release
+
 COPY --from=builder /build/bin/mgmt-server /management-server
 COPY --from=nodebuilder dist/ ./dist
 
