@@ -21,6 +21,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
+          file: ./discovery-server.Dockerfile
           platforms: linux/amd64,linux/arm/v7
           push: true
           tags: ghcr.io/chacal/thread-discovery-server:latest
@@ -40,8 +41,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
+          file: ./management-server.Dockerfile
           platforms: linux/amd64,linux/arm/v7
           push: true
           tags: ghcr.io/chacal/thread-mgmt-server:latest
-          build-args: |
-            BINARY=mgmt-server

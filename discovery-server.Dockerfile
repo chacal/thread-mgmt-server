@@ -1,9 +1,5 @@
 FROM golang AS builder
 
-# Build discovery-server by default
-ARG BINARY=discovery-server
-ENV ENV_BINARY=$BINARY
-
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
     CGO_ENABLED=0 \
@@ -26,12 +22,12 @@ COPY pkg/ ./pkg
 # Build the application
 RUN go build -o bin ./...
 
-RUN cp /build/bin/${ENV_BINARY} /main
+RUN cp /build/bin/discovery-server /discovery-server
 
 # Build a small image
 FROM scratch
 
-COPY --from=builder /main /main
+COPY --from=builder /build/bin/discovery-server /discovery-server
 
 # Command to run
-ENTRYPOINT ["/main"]
+ENTRYPOINT ["/discovery-server"]
