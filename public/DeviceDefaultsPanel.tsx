@@ -41,6 +41,10 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
     setDefaults({ ...defaults, txPower: parseInt(e.target.value) })
   }
 
+  const onDisplayTypeSelected = (e: ChangeEvent<HTMLSelectElement>) => {
+    setDefaults({ ...defaults, displayType: e.target.value })
+  }
+
   const onPollPeriodChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setDefaults({ ...defaults, pollPeriod: parseInt(e.target.value) })
   }
@@ -60,8 +64,8 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
       .catch(setErrorStatus)
   }
 
-  const isSaveDisabled = () => !isValidInstance(defaults.instance) || isEqual(defaults, props.defaults)
-  const isPushDisabled = () => props.mainIp === '' || !isEqual(defaults, props.defaults)
+  const isSaveDisabled = () => !isValidInstance(defaults.instance) || defaults.displayType === '' || isEqual(defaults, props.defaults)
+  const isPushDisabled = () => props.mainIp === '' || defaults.displayType === '' || !isEqual(defaults, props.defaults)
 
   return <SubPanel heading={'Defaults'}>
     <Grid item container spacing={3} className={classes.defaultsPanelInputs}>
@@ -74,6 +78,11 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
       <DefaultComponent>
         <PollPeriodAutoComplete pollPeriod={defaults.pollPeriod} onPollPeriodChange={onPollPeriodChange}/>
       </DefaultComponent>
+    </Grid>
+    <Grid item container spacing={3} xs={12} className={classes.defaultsPanelInputs}>
+      <Grid item xs={9} sm={6} md={8} lg={6}>
+        <DisplayTypeSelect displayType={defaults.displayType} onDisplayTypeSelected={onDisplayTypeSelected}/>
+      </Grid>
     </Grid>
     <Grid item container spacing={2} xs={12} alignItems={'center'}>
       <Grid item>
@@ -130,6 +139,18 @@ function PollPeriodAutoComplete(props: { pollPeriod: number, onPollPeriodChange:
             }
     >
       {[50, 100, 200, 500, 1000, 2000, 5000, 10000, 15000].map(v => <MenuItem key={v} value={v}>{v}</MenuItem>)}
+    </Select>
+  </FormControl>
+}
+
+function DisplayTypeSelect(props: { displayType: string, onDisplayTypeSelected: SelectInputProps['onChange'] }) {
+  return <FormControl fullWidth>
+    <InputLabel shrink={true} id="display-label">Display</InputLabel>
+    <Select labelId="display-label" value={props.displayType} onChange={props.onDisplayTypeSelected}>
+      <MenuItem value={'GOOD_DISPLAY_1_54IN'}>GoodDisplay 1.54"</MenuItem>
+      <MenuItem value={'GOOD_DISPLAY_2_13IN'}>GoodDisplay 2.13"</MenuItem>
+      <MenuItem value={'GOOD_DISPLAY_2_9IN'}>GoodDisplay 2.9"</MenuItem>
+      <MenuItem value={'GOOD_DISPLAY_2_9IN_4GRAY'}>GoodDisplay 2.9" 4-gray</MenuItem>
     </Select>
   </FormControl>
 }

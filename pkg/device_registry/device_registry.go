@@ -15,10 +15,18 @@ type Device struct {
 	Config   Config   `json:"config"`
 }
 
+const (
+	GOOD_DISPLAY_1_54IN      = "GOOD_DISPLAY_1_54IN"
+	GOOD_DISPLAY_2_13IN      = "GOOD_DISPLAY_2_13IN"
+	GOOD_DISPLAY_2_9IN       = "GOOD_DISPLAY_2_9IN"
+	GOOD_DISPLAY_2_9IN_4GRAY = "GOOD_DISPLAY_2_9IN_4GRAY"
+)
+
 type Defaults struct {
-	Instance   string `json:"instance"`
-	TxPower    int    `json:"txPower"`
-	PollPeriod int    `json:"pollPeriod"`
+	Instance    string `json:"instance"`
+	TxPower     int    `json:"txPower"`
+	PollPeriod  int    `json:"pollPeriod"`
+	DisplayType string `json:"displayType"`
 }
 
 type ParentInfo struct {
@@ -49,7 +57,7 @@ const DefaultsBucket = "Defaults"
 const StateBucket = "State"
 const ConfigBucket = "Config"
 
-var DefaultDefaults = Defaults{Instance: "0000", TxPower: 0, PollPeriod: 1000}
+var DefaultDefaults = Defaults{Instance: "0000", TxPower: 0, PollPeriod: 1000, DisplayType: ""}
 var DefaultConfig = Config{MainIp: nil, StatePollingEnabled: false, StatePollingIntervalSec: 600}
 var DefaultDevice = Device{DefaultDefaults, nil, DefaultConfig}
 

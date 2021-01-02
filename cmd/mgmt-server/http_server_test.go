@@ -33,7 +33,8 @@ func TestV1GetDevices(t *testing.T) {
 				"defaults": {
 					"instance": "0000",
 					"txPower": 0,
-					"pollPeriod": 1000
+					"pollPeriod": 1000,
+                    "displayType": ""
 				},
 				"config": {
 					"mainIp": "",
@@ -45,7 +46,9 @@ func TestV1GetDevices(t *testing.T) {
 		T.RecordGet(router, "/v1/devices"),
 	)
 
-	err = reg.UpdateDefaults("12345", device_registry.Defaults{"D100", -4, 5000})
+	err = reg.UpdateDefaults("12345",
+		device_registry.Defaults{"D100", -4, 5000, device_registry.GOOD_DISPLAY_2_9IN_4GRAY},
+	)
 	require.NoError(t, err)
 
 	T.AssertOKJson(t,
@@ -54,7 +57,8 @@ func TestV1GetDevices(t *testing.T) {
 				"defaults": {
 					"instance": "D100",
 					"txPower": -4,
-					"pollPeriod": 5000
+					"pollPeriod": 5000,
+					"displayType": "GOOD_DISPLAY_2_9IN_4GRAY"
 				},
 				"config": {
 					"mainIp": "",
@@ -69,7 +73,9 @@ func TestV1GetDevices(t *testing.T) {
 	_, err = reg.Create("ABCDE")
 	require.NoError(t, err)
 
-	err = reg.UpdateDefaults("ABCDE", device_registry.Defaults{"D101", 0, 3000})
+	err = reg.UpdateDefaults("ABCDE",
+		device_registry.Defaults{"D101", 0, 3000, device_registry.GOOD_DISPLAY_2_9IN},
+	)
 	require.NoError(t, err)
 	err = reg.UpdateState("ABCDE", testState)
 	require.NoError(t, err)
@@ -77,11 +83,11 @@ func TestV1GetDevices(t *testing.T) {
 	T.AssertOKJson(t,
 		`{
 			"12345": {
-				"defaults": { "instance": "D100", "txPower": -4, "pollPeriod": 5000 },
+				"defaults": { "instance": "D100", "txPower": -4, "pollPeriod": 5000, "displayType": "GOOD_DISPLAY_2_9IN_4GRAY" },
 				"config": { "mainIp": "", "statePollingEnabled": false, "statePollingIntervalSec": 600 }
 			},
 			"ABCDE": {
-				"defaults": { "instance": "D101", "txPower": 0, "pollPeriod": 3000 },
+				"defaults": { "instance": "D101", "txPower": 0, "pollPeriod": 3000, "displayType": "GOOD_DISPLAY_2_9IN" },
 				"config": { "mainIp": "", "statePollingEnabled": false, "statePollingIntervalSec": 600 },
 				"state": {
 					"vcc": 2970,
@@ -114,13 +120,13 @@ func TestV1PostDefaults(t *testing.T) {
 	}{
 		"default": {
 			"ABCDE",
-			`{"instance": "D101", "txPower": 0, "pollPeriod": 1000}`,
-			device_registry.Defaults{"D101", 0, 1000},
+			`{"instance": "D101", "txPower": 0, "pollPeriod": 1000, "displayType": ""}`,
+			device_registry.Defaults{"D101", 0, 1000, ""},
 		},
 		"replaces previous defaults": {
 			"ABCDE",
-			`{"instance": "D102", "txPower": 4, "pollPeriod": 2000}`,
-			device_registry.Defaults{"D102", 4, 2000},
+			`{"instance": "D102", "txPower": 4, "pollPeriod": 2000, "displayType": "GOOD_DISPLAY_1_54IN"}`,
+			device_registry.Defaults{"D102", 4, 2000, device_registry.GOOD_DISPLAY_1_54IN},
 		},
 	}
 

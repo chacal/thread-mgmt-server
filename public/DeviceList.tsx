@@ -12,6 +12,7 @@ export interface DeviceDefaults {
   instance: string
   txPower: number
   pollPeriod: number
+  displayType: string
 }
 
 interface ParentInfo {
