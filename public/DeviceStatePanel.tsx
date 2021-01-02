@@ -39,7 +39,7 @@ export default function DeviceStatePanel(props: DeviceStatePanelProps) {
         <StateItem heading={'Voltage'} values={voltageString(props.state)}/>
       </Grid>
       <Grid item xs={4}>
-        <StateItem heading={'Tx Power'} values={props.state?.txPower?.toString()}/>
+        <StateItem heading={'Tx Power'} values={rssiString(props.state?.txPower)}/>
       </Grid>
     </Grid>
     <Grid item container xs={12}>
