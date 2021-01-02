@@ -55,7 +55,7 @@ export default function DeviceStatePanel(props: DeviceStatePanelProps) {
     </Grid>
     <Grid item container xs={12}>
       <Grid item xs={4}>
-        <StateItem heading={'RLOC16'} values={props.state?.parent?.rloc16}/>
+        <StateItem heading={'Parent RLOC16'} values={props.state?.parent?.rloc16}/>
       </Grid>
       <Grid item xs={4}>
         <StateItem heading={'Link Quality In/Out'} values={linkQualityString(props.state)}/>
