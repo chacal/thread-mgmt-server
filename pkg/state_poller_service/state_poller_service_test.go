@@ -16,7 +16,10 @@ var ip2 = net.ParseIP("ffff::2")
 
 func TestCreate(t *testing.T) {
 	reg := device_registry.CreateTestRegistry(t)
-	sp := Create(reg)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockSender := mocks.NewMockMqttSender(mockCtrl)
+	sp := Create(reg, mockSender)
 
 	assert.Empty(t, sp.pollers)
 }
@@ -26,7 +29,8 @@ func TestStatePollerService_Refresh_whenConfigChanges(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockPoller := mocks.NewMockStatePoller(mockCtrl)
-	sp := CreateWithPollerCreator(reg, mockDevicePollerCreator(mockPoller))
+	mockSender := mocks.NewMockMqttSender(mockCtrl)
+	sp := CreateWithPollerCreator(reg, mockSender, mockDevicePollerCreator(mockPoller))
 	_, _ = reg.Create("12345")
 
 	// Refresh with disabled polling should not start pollers
@@ -67,7 +71,8 @@ func TestStatePollerService_Refresh_whenDeviceDeleted(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 	mockPoller := mocks.NewMockStatePoller(mockCtrl)
-	sp := CreateWithPollerCreator(reg, mockDevicePollerCreator(mockPoller))
+	mockSender := mocks.NewMockMqttSender(mockCtrl)
+	sp := CreateWithPollerCreator(reg, mockSender, mockDevicePollerCreator(mockPoller))
 	_, _ = reg.Create("12345")
 
 	// Refresh with enabled polling should start poller
@@ -85,7 +90,11 @@ func TestStatePollerService_Refresh_whenDeviceDeleted(t *testing.T) {
 
 func TestStatePollerService_PollResultHandling(t *testing.T) {
 	reg := device_registry.CreateTestRegistry(t)
-	sps := Create(reg)
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	mockSender := mocks.NewMockMqttSender(mockCtrl)
+
+	sps := Create(reg, mockSender)
 	_, _ = reg.Create("12345")
 
 	pollResults := make(chan pollResult)
@@ -95,6 +104,7 @@ func TestStatePollerService_PollResultHandling(t *testing.T) {
 	require.NoError(t, err)
 	defer sps.Stop()
 
+	mockSender.EXPECT().PublishState(gomock.Eq(testState))
 	pollResults <- pollResult{"12345", testState}
 
 	assert.Eventually(t, func() bool {

@@ -4,17 +4,22 @@ import (
 	"context"
 	"github.com/chacal/thread-mgmt-server/pkg/device_gateway"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
+	"github.com/chacal/thread-mgmt-server/pkg/mqtt"
 	"github.com/chacal/thread-mgmt-server/pkg/server"
 	"github.com/chacal/thread-mgmt-server/pkg/state_poller_service"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
+	"strings"
 	"time"
 )
 
 type Options struct {
-	CoapPort int    `short:"c" long:"coap_port" description:"CoAP port to listen" default:"5683" env:"COAP_PORT"`
-	HttpPort int    `short:"p" long:"http_port" description:"HTTP port to listen" default:"8080" env:"HTTP_PORT"`
-	DbFile   string `short:"f" long:"file" description:"Database file for device registry" default:"devices.db" env:"DB_FILE"`
+	CoapPort      int    `short:"c" long:"coap-port" description:"CoAP port to listen" default:"5683" env:"COAP_PORT"`
+	HttpPort      int    `short:"p" long:"http-port" description:"HTTP port to listen" default:"8080" env:"HTTP_PORT"`
+	DbFile        string `short:"f" long:"file" description:"Database file for device registry" default:"devices.db" env:"DB_FILE"`
+	MqttBorkerUrl string `long:"mqtt-broker" description:"MQTT broker url (eg. 'tcp://broker.domain:1883')" env:"MQTT_BROKER" required:"true"`
+	MqttUsername  string `long:"mqtt-username" description:"MQTT username" env:"MQTT_USERNAME" required:"true"`
+	MqttPassword  string `long:"mqtt-password" description:"MQTT password" env:"MQTT_PASSWORD" required:"true"`
 }
 
 func main() {
@@ -34,8 +39,10 @@ func main() {
 	defer reg.Close()
 
 	gw := device_gateway.Create()
+	mqttSender := mqtt.CreateSender(opts.MqttBorkerUrl, opts.MqttUsername, opts.MqttPassword)
+	mqttSender.Connect()
 
-	sps := state_poller_service.Create(reg)
+	sps := state_poller_service.Create(reg, mqttSender)
 	err = sps.Start()
 	if err != nil {
 		log.Fatalf("Failed create state poller service. Error: %+v", err)
@@ -83,6 +90,13 @@ func logOptions(opts Options) {
 		"--------------------\n" +
 		"CoAP listen port:\t%v\n" +
 		"HTTP listen port:\t%v\n" +
-		"DB file:\t\t%v\n"
-	log.Infof(format, opts.CoapPort, opts.HttpPort, opts.DbFile)
+		"DB file:\t\t%v\n" +
+		"MQTT broker:\t\t%v\n" +
+		"MQTT username:\t\t%v\n" +
+		"MQTT password:\t\t%v\n"
+	log.Infof(format, opts.CoapPort, opts.HttpPort, opts.DbFile, opts.MqttBorkerUrl, opts.MqttUsername, obfuscate(opts.MqttPassword))
+}
+
+func obfuscate(s string) string {
+	return s[:2] + strings.Repeat("*", len(s)-2)
 }

@@ -7,7 +7,7 @@ function stop_server {
 trap stop_server EXIT
 
 go build -o bin cmd/mgmt-server/*
-./bin/main &
+./bin/main --mqtt-broker "" --mqtt-username "" --mqtt-password pass &
 MAIN_PID=$!
 
 npx webpack serve

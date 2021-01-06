@@ -5,6 +5,7 @@ import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	http_routes "github.com/chacal/thread-mgmt-server/pkg/mgmt_routes/http"
 	"github.com/chacal/thread-mgmt-server/pkg/mocks"
+	"github.com/chacal/thread-mgmt-server/pkg/mqtt"
 	"github.com/chacal/thread-mgmt-server/pkg/state_poller_service"
 	T "github.com/chacal/thread-mgmt-server/pkg/test"
 	"github.com/gin-gonic/gin"
@@ -258,7 +259,8 @@ func setup(t *testing.T) (*gin.Engine, *device_registry.Registry) {
 
 func setupWithGw(t *testing.T, gw device_gateway.DeviceGateway) (*gin.Engine, *device_registry.Registry) {
 	reg := device_registry.CreateTestRegistry(t)
-	sps := state_poller_service.Create(reg)
+	mqttSender := mqtt.CreateSender("", "", "")
+	sps := state_poller_service.Create(reg, mqttSender)
 	router := gin.Default()
 	http_routes.RegisterRoutes(router, reg, gw, sps)
 

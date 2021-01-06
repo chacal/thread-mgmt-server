@@ -4,6 +4,7 @@ package state_poller_service
 
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
+	"github.com/chacal/thread-mgmt-server/pkg/mqtt"
 	log "github.com/sirupsen/logrus"
 	"net"
 	"time"
@@ -22,19 +23,21 @@ type StatePollerService interface {
 
 type statePollerService struct {
 	reg           *device_registry.Registry
+	mqttSender    mqtt.MqttSender
 	pollers       map[string]StatePoller
 	pollerCreator StatePollerCreator
 	pollResults   chan pollResult
 	done          chan bool
 }
 
-func Create(reg *device_registry.Registry) *statePollerService {
-	return CreateWithPollerCreator(reg, defaultStatePollerCreator)
+func Create(reg *device_registry.Registry, mqttSender mqtt.MqttSender) *statePollerService {
+	return CreateWithPollerCreator(reg, mqttSender, defaultStatePollerCreator)
 }
 
-func CreateWithPollerCreator(reg *device_registry.Registry, pollerCreator StatePollerCreator) *statePollerService {
+func CreateWithPollerCreator(reg *device_registry.Registry, mqttSender mqtt.MqttSender, pollerCreator StatePollerCreator) *statePollerService {
 	sp := statePollerService{
 		reg:           reg,
+		mqttSender:    mqttSender,
 		pollers:       make(map[string]StatePoller),
 		pollerCreator: pollerCreator,
 		pollResults:   make(chan pollResult),
@@ -90,6 +93,7 @@ func (sp *statePollerService) handlePollResults() {
 			if err != nil {
 				log.Errorf("failed to update state, deviceId: %v, error: %v", s.deviceId, err)
 			}
+			sp.mqttSender.PublishState(s.state)
 		case _ = <-sp.done:
 			log.Infof("Ending poll result handling")
 			return
