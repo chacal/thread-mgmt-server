@@ -21,64 +21,56 @@ var testState = device_registry.State{
 }
 
 func TestStatePoller_Start(t *testing.T) {
-	reg, mockGw := create(t)
+	pollResults, mockGw := create(t)
 
-	poller := createPoller(reg, mockGw, 200*time.Millisecond)
+	poller := createPoller(pollResults, mockGw, 200*time.Millisecond)
 	defer poller.Stop()
-	dev, _ := reg.Create("12345")
-	assert.Equal(t, (*device_registry.State)(nil), dev.State)
 
 	mockGw.EXPECT().FetchState(gomock.Eq(ip)).Return(testState, nil)
 	poller.Start()
 
 	// Wait for immediate poll
-	time.Sleep(100 * time.Millisecond)
-
-	dev, _ = reg.Get("12345")
-	assert.Equal(t, &testState, dev.State)
+	result := <-pollResults
+	assert.Equal(t, pollResult{"12345", testState}, result)
 
 	testState2 := testState
 	testState2.Vcc = 3000
 	mockGw.EXPECT().FetchState(gomock.Eq(ip)).Return(testState2, nil)
 
 	// Wait for the first timer poll
-	time.Sleep(200 * time.Millisecond)
-
-	dev, _ = reg.Get("12345")
-	assert.Equal(t, &testState2, dev.State)
+	result = <-pollResults
+	assert.Equal(t, pollResult{"12345", testState2}, result)
 }
 
 func TestStatePoller_Refresh(t *testing.T) {
-	reg, mockGw := create(t)
+	pollResults, mockGw := create(t)
 
-	poller := createPoller(reg, mockGw, 200*time.Millisecond)
+	poller := createPoller(pollResults, mockGw, 200*time.Millisecond)
 	defer poller.Stop()
-	_, _ = reg.Create("12345")
 
 	mockGw.EXPECT().FetchState(gomock.Eq(ip)).Return(testState, nil)
 	poller.Start()
 
 	// Wait for immediate poll
-	time.Sleep(100 * time.Millisecond)
+	<-pollResults
 
 	mockGw.EXPECT().FetchState(gomock.Eq(ip2)).Return(testState, nil)
 	poller.Refresh(1, ip2)
 
 	// Wait for the next poll
-	time.Sleep(1100 * time.Millisecond)
+	<-pollResults
 }
 
 func TestStatePoller_Stop(t *testing.T) {
-	reg, mockGw := create(t)
+	pollResults, mockGw := create(t)
 
-	poller := createPoller(reg, mockGw, 200*time.Millisecond)
-	_, _ = reg.Create("12345")
+	poller := createPoller(pollResults, mockGw, 200*time.Millisecond)
 
 	mockGw.EXPECT().FetchState(gomock.Eq(ip)).Return(testState, nil)
 	poller.Start()
 
 	// Wait for immediate poll
-	time.Sleep(100 * time.Millisecond)
+	<-pollResults
 
 	poller.Stop()
 
@@ -86,18 +78,18 @@ func TestStatePoller_Stop(t *testing.T) {
 	time.Sleep(300 * time.Millisecond)
 }
 
-func create(t *testing.T) (*device_registry.Registry, *mocks.MockDeviceGateway) {
-	reg := device_registry.CreateTestRegistry(t)
+func create(t *testing.T) (chan pollResult, *mocks.MockDeviceGateway) {
+	pollResults := make(chan pollResult)
 	mockCtrl := gomock.NewController(t)
 	t.Cleanup(func() {
 		mockCtrl.Finish()
 	})
 	mockGw := mocks.NewMockDeviceGateway(mockCtrl)
-	return reg, mockGw
+	return pollResults, mockGw
 }
 
-func createPoller(reg *device_registry.Registry, gw device_gateway.DeviceGateway, interval time.Duration) *statePoller {
+func createPoller(pollResults chan pollResult, gw device_gateway.DeviceGateway, interval time.Duration) *statePoller {
 	return &statePoller{"12345", interval, ip, nil,
-		gw, reg, func() time.Duration { return 0 },
+		gw, pollResults, func() time.Duration { return 0 },
 	}
 }

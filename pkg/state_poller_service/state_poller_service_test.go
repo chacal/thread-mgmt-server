@@ -83,8 +83,28 @@ func TestStatePollerService_Refresh_whenDeviceDeleted(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestStatePollerService_PollResultHandling(t *testing.T) {
+	reg := device_registry.CreateTestRegistry(t)
+	sps := Create(reg)
+	_, _ = reg.Create("12345")
+
+	pollResults := make(chan pollResult)
+	sps.pollResults = pollResults
+
+	err := sps.Start()
+	require.NoError(t, err)
+	defer sps.Stop()
+
+	pollResults <- pollResult{"12345", testState}
+
+	assert.Eventually(t, func() bool {
+		dev, _ := reg.Get("12345")
+		return assert.ObjectsAreEqual(&testState, dev.State)
+	}, time.Second, 10*time.Millisecond)
+}
+
 func mockDevicePollerCreator(mockPoller *mocks.MockStatePoller) StatePollerCreator {
-	return func(reg *device_registry.Registry, deviceId string, pollingInterval time.Duration, ip net.IP) StatePoller {
+	return func(pollResults chan pollResult, deviceId string, pollingInterval time.Duration, ip net.IP) StatePoller {
 		return mockPoller
 	}
 }

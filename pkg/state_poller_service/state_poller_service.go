@@ -4,11 +4,19 @@ package state_poller_service
 
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"time"
 )
 
+type pollResult struct {
+	deviceId string
+	state    device_registry.State
+}
+
 type StatePollerService interface {
+	Start() error
+	Stop()
 	Refresh() error
 }
 
@@ -16,16 +24,32 @@ type statePollerService struct {
 	reg           *device_registry.Registry
 	pollers       map[string]StatePoller
 	pollerCreator StatePollerCreator
+	pollResults   chan pollResult
+	done          chan bool
 }
 
 func Create(reg *device_registry.Registry) *statePollerService {
-	sp := statePollerService{reg, make(map[string]StatePoller), defaultStatePollerCreator}
-	return &sp
+	return CreateWithPollerCreator(reg, defaultStatePollerCreator)
 }
 
 func CreateWithPollerCreator(reg *device_registry.Registry, pollerCreator StatePollerCreator) *statePollerService {
-	sp := statePollerService{reg, make(map[string]StatePoller), pollerCreator}
+	sp := statePollerService{
+		reg:           reg,
+		pollers:       make(map[string]StatePoller),
+		pollerCreator: pollerCreator,
+		pollResults:   make(chan pollResult),
+		done:          make(chan bool),
+	}
 	return &sp
+}
+
+func (sp *statePollerService) Start() error {
+	go sp.handlePollResults()
+	return sp.Refresh()
+}
+
+func (sp *statePollerService) Stop() {
+	sp.done <- true
 }
 
 func (sp *statePollerService) Refresh() error {
@@ -58,9 +82,24 @@ func (sp *statePollerService) Refresh() error {
 	return nil
 }
 
+func (sp *statePollerService) handlePollResults() {
+	for {
+		select {
+		case s := <-sp.pollResults:
+			err := sp.reg.UpdateState(s.deviceId, s.state)
+			if err != nil {
+				log.Errorf("failed to update state, deviceId: %v, error: %v", s.deviceId, err)
+			}
+		case _ = <-sp.done:
+			log.Infof("Ending poll result handling")
+			return
+		}
+	}
+}
+
 func (sp *statePollerService) createPoller(deviceId string, pollingIntervalSec int, ip net.IP) {
 	duration := time.Duration(pollingIntervalSec) * time.Second
-	poller := sp.pollerCreator(sp.reg, deviceId, duration, ip)
+	poller := sp.pollerCreator(sp.pollResults, deviceId, duration, ip)
 	sp.pollers[deviceId] = poller
 	poller.Start()
 }

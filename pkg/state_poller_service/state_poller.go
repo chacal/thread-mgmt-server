@@ -4,7 +4,6 @@ package state_poller_service
 
 import (
 	"github.com/chacal/thread-mgmt-server/pkg/device_gateway"
-	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"net"
@@ -19,7 +18,7 @@ type StatePoller interface {
 	Stop()
 }
 
-type StatePollerCreator func(reg *device_registry.Registry, deviceId string, pollingInterval time.Duration, ip net.IP) StatePoller
+type StatePollerCreator func(pollResults chan pollResult, deviceId string, pollingInterval time.Duration, ip net.IP) StatePoller
 
 type statePoller struct {
 	deviceId             string
@@ -27,13 +26,13 @@ type statePoller struct {
 	ip                   net.IP
 	timer                *time.Timer
 	gw                   device_gateway.DeviceGateway
-	reg                  *device_registry.Registry
+	pollResults          chan pollResult
 	sleepRandomizer      func() time.Duration
 }
 
-func defaultStatePollerCreator(reg *device_registry.Registry, deviceId string, pollingInterval time.Duration, ip net.IP) StatePoller {
+func defaultStatePollerCreator(pollResults chan pollResult, deviceId string, pollingInterval time.Duration, ip net.IP) StatePoller {
 	return &statePoller{deviceId, pollingInterval, ip, nil, device_gateway.Create(),
-		reg, nextSleepRandomDuration,
+		pollResults, nextSleepRandomDuration,
 	}
 }
 
@@ -75,11 +74,7 @@ func (sp *statePoller) pollDeviceOnce() {
 		return
 	}
 
-	log.Infof("Updating state for device %v: %v", sp.deviceId, state)
-	err = sp.reg.UpdateState(sp.deviceId, state)
-	if err != nil {
-		log.Errorf("failed to update state, deviceId: %v, error: %v", sp.deviceId, err)
-	}
+	sp.pollResults <- pollResult{sp.deviceId, state}
 }
 
 func nextSleepRandomDuration() time.Duration {

@@ -36,10 +36,11 @@ func main() {
 	gw := device_gateway.Create()
 
 	sps := state_poller_service.Create(reg)
-	err = sps.Refresh()
+	err = sps.Start()
 	if err != nil {
 		log.Fatalf("Failed create state poller service. Error: %+v", err)
 	}
+	defer sps.Stop()
 
 	serverExit := make(chan int, 2)
 
