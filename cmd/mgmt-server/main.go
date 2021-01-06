@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/chacal/thread-mgmt-server/pkg/device_gateway"
 	"github.com/chacal/thread-mgmt-server/pkg/device_registry"
 	"github.com/chacal/thread-mgmt-server/pkg/mqtt"
@@ -9,6 +10,7 @@ import (
 	"github.com/chacal/thread-mgmt-server/pkg/state_poller_service"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -27,9 +29,9 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	opts := Options{}
 	server.ParseOptions(&opts)
-	logOptions(opts)
 
 	log.Info(Splash)
+	logOptions(opts)
 
 	// Start device registry
 	reg, err := device_registry.Open(opts.DbFile)
@@ -86,15 +88,27 @@ func startHttpServer(opts Options, reg *device_registry.Registry, gw device_gate
 }
 
 func logOptions(opts Options) {
-	format := "Using configuration:\n" +
-		"--------------------\n" +
-		"CoAP listen port:\t%v\n" +
-		"HTTP listen port:\t%v\n" +
-		"DB file:\t\t%v\n" +
-		"MQTT broker:\t\t%v\n" +
-		"MQTT username:\t\t%v\n" +
-		"MQTT password:\t\t%v\n"
-	log.Infof(format, opts.CoapPort, opts.HttpPort, opts.DbFile, opts.MqttBorkerUrl, opts.MqttUsername, obfuscate(opts.MqttPassword))
+	rows := []struct {
+		header string
+		value  string
+	}{
+		{"CoAP listen port", strconv.Itoa(opts.CoapPort)},
+		{"HTTP listen port", strconv.Itoa(opts.HttpPort)},
+		{"DB file", opts.DbFile},
+		{"MQTT broker", opts.MqttBorkerUrl},
+		{"MQTT username", opts.MqttUsername},
+		{"MQTT password", obfuscate(opts.MqttPassword)},
+	}
+	rowFormat := "%-20v%v\n"
+
+	var b strings.Builder
+	b.WriteString("Using configuration:\n")
+	b.WriteString(strings.Repeat("-", 25) + "\n")
+	for _, r := range rows {
+		_, _ = fmt.Fprintf(&b, rowFormat, r.header+":", r.value)
+	}
+	b.WriteString("\n")
+	log.Info(b.String())
 }
 
 func obfuscate(s string) string {
