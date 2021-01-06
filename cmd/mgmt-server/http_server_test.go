@@ -143,6 +143,7 @@ func TestV1PostDefaults(t *testing.T) {
 
 func TestV1PostConfig(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	mockSps := mocks.NewMockStatePollerService(mockCtrl)
 
 	router, reg := setupWithSps(t, mockSps)
@@ -177,6 +178,7 @@ func TestV1PostConfig(t *testing.T) {
 
 func TestV1DeleteDevice(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	mockSps := mocks.NewMockStatePollerService(mockCtrl)
 
 	router, reg := setupWithSps(t, mockSps)
@@ -195,6 +197,7 @@ func TestV1DeleteDevice(t *testing.T) {
 
 func TestV1PostDevicePush(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	mockGw := mocks.NewMockDeviceGateway(mockCtrl)
 
 	router, reg := setupWithGw(t, mockGw)
@@ -210,6 +213,7 @@ func TestV1PostDevicePush(t *testing.T) {
 
 func TestV1PostRefreshState(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	mockGw := mocks.NewMockDeviceGateway(mockCtrl)
 
 	router, reg := setupWithGw(t, mockGw)
