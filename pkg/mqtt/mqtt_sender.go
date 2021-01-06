@@ -35,6 +35,10 @@ type mqttSender struct {
 }
 
 func CreateSender(connectionUrl string, username string, password string) *mqttSender {
+	mqtt.ERROR = log.StandardLogger()
+	mqtt.CRITICAL = log.StandardLogger()
+	mqtt.WARN = log.StandardLogger()
+
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(connectionUrl)
 	opts.SetUsername(username)
