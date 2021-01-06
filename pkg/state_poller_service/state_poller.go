@@ -65,7 +65,7 @@ func (sp *statePoller) Stop() {
 
 func (sp *statePoller) pollDeviceOnce() {
 	var nextSleep = sp.statePollingInterval + sp.sleepRandomizer()
-	log.Infof("Polling device %v, next sleep %v", sp.deviceId, nextSleep)
+	log.Debugf("Polling device %v, next sleep %v", sp.deviceId, nextSleep)
 	defer sp.timer.Reset(nextSleep)
 
 	state, err := sp.gw.FetchState(sp.ip)
