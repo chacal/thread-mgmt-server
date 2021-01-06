@@ -12,9 +12,18 @@ import (
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"strconv"
+	"time"
 )
 
 const MQTT_STATE_TAG = "d"
+
+type ThreadDisplayStatus struct {
+	Instance  string                     `json:"instance"`
+	Tag       string                     `json:"tag"`
+	TimeStamp string                     `json:"ts"`
+	Vcc       int                        `json:"vcc"`
+	Parent    device_registry.ParentInfo `json:"parent"`
+}
 
 type MqttSender interface {
 	Connect() chan bool
@@ -55,20 +64,37 @@ func (s *mqttSender) Connect() chan bool {
 func (s *mqttSender) PublishState(state device_registry.State) {
 	if !s.client.IsConnectionOpen() {
 		log.Warnf("Can't publish state for device %v. MQTT not connected.", state.Instance)
-	} else {
-		buf, err := json.Marshal(state)
-		if err != nil {
+		return
+	}
+
+	topic, payload, err := publishDataForState(state, time.Now())
+	if err != nil {
+		log.Error(publishErrorMsg(state, err))
+		return
+	}
+
+	t := s.client.Publish(topic, 1, true, payload)
+	go func() {
+		_ = t.Wait()
+		if t.Error() != nil {
 			log.Error(publishErrorMsg(state, err))
 		}
+	}()
+}
 
-		topic := fmt.Sprintf("/sensor/%s/%s/state", state.Instance, MQTT_STATE_TAG)
-		t := s.client.Publish(topic, 1, true, buf)
-		go func() {
-			_ = t.Wait()
-			if t.Error() != nil {
-				log.Error(publishErrorMsg(state, err))
-			}
-		}()
+func publishDataForState(state device_registry.State, ts time.Time) (string, []byte, error) {
+	topic := fmt.Sprintf("/sensor/%s/%s/state", state.Instance, MQTT_STATE_TAG)
+	buf, err := json.Marshal(displayStatusFromState(state, ts))
+	return topic, buf, err
+}
+
+func displayStatusFromState(s device_registry.State, ts time.Time) ThreadDisplayStatus {
+	return ThreadDisplayStatus{
+		Instance:  s.Instance,
+		Tag:       MQTT_STATE_TAG,
+		TimeStamp: ts.Format(time.RFC3339),
+		Vcc:       s.Vcc,
+		Parent:    s.Parent,
 	}
 }
 
