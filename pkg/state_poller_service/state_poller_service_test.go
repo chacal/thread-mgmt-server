@@ -27,11 +27,11 @@ func TestStatePollerService_Refresh_whenConfigChanges(t *testing.T) {
 	defer mockCtrl.Finish()
 	mockPoller := mocks.NewMockStatePoller(mockCtrl)
 	sp := CreateWithPollerCreator(reg, mockDevicePollerCreator(mockPoller))
-	_, err := reg.Create("12345")
+	_, _ = reg.Create("12345")
 
 	// Refresh with disabled polling should not start pollers
 	reg.UpdateConfig("12345", device_registry.Config{ip, false, 600})
-	err = sp.Refresh()
+	err := sp.Refresh()
 	require.NoError(t, err)
 
 	// Refresh with enabled polling should start poller
@@ -68,12 +68,12 @@ func TestStatePollerService_Refresh_whenDeviceDeleted(t *testing.T) {
 	defer mockCtrl.Finish()
 	mockPoller := mocks.NewMockStatePoller(mockCtrl)
 	sp := CreateWithPollerCreator(reg, mockDevicePollerCreator(mockPoller))
-	_, err := reg.Create("12345")
+	_, _ = reg.Create("12345")
 
 	// Refresh with enabled polling should start poller
 	reg.UpdateConfig("12345", device_registry.Config{ip, true, 600})
 	mockPoller.EXPECT().Start()
-	err = sp.Refresh()
+	err := sp.Refresh()
 	require.NoError(t, err)
 
 	// Refresh with deleted device should stop poller
