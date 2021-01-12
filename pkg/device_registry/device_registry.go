@@ -22,11 +22,17 @@ const (
 	GOOD_DISPLAY_2_9IN_4GRAY = "GOOD_DISPLAY_2_9IN_4GRAY"
 )
 
+const (
+	E73          = "E73"
+	MS88SF2_V1_0 = "MS88SF2_V1_0"
+)
+
 type Defaults struct {
 	Instance    string `json:"instance"`
 	TxPower     int    `json:"txPower"`
 	PollPeriod  int    `json:"pollPeriod"`
 	DisplayType string `json:"displayType"`
+	HwVersion   string `json:"hwVersion"`
 }
 
 type ParentInfo struct {
@@ -57,7 +63,7 @@ const DefaultsBucket = "Defaults"
 const StateBucket = "State"
 const ConfigBucket = "Config"
 
-var DefaultDefaults = Defaults{Instance: "0000", TxPower: 0, PollPeriod: 1000, DisplayType: ""}
+var DefaultDefaults = Defaults{Instance: "0000", TxPower: 0, PollPeriod: 1000, DisplayType: "", HwVersion: ""}
 var DefaultConfig = Config{MainIp: nil, StatePollingEnabled: false, StatePollingIntervalSec: 600}
 var DefaultDevice = Device{DefaultDefaults, nil, DefaultConfig}
 

@@ -45,6 +45,10 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
     setDefaults({ ...defaults, displayType: e.target.value })
   }
 
+  const onHwVersionSelected = (e: ChangeEvent<HTMLSelectElement>) => {
+    setDefaults({ ...defaults, hwVersion: e.target.value })
+  }
+
   const onPollPeriodChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setDefaults({ ...defaults, pollPeriod: parseInt(e.target.value) })
   }
@@ -64,8 +68,8 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
       .catch(setErrorStatus)
   }
 
-  const isSaveDisabled = () => !isValidInstance(defaults.instance) || defaults.displayType === '' || isEqual(defaults, props.defaults)
-  const isPushDisabled = () => props.mainIp === '' || defaults.displayType === '' || !isEqual(defaults, props.defaults)
+  const isSaveDisabled = () => !isValidInstance(defaults.instance) || defaults.displayType === '' || defaults.hwVersion === '' || isEqual(defaults, props.defaults)
+  const isPushDisabled = () => props.mainIp === '' || defaults.displayType === '' || defaults.hwVersion === '' || !isEqual(defaults, props.defaults)
 
   return <SubPanel heading={'Defaults'}>
     <Grid item container spacing={3} className={classes.defaultsPanelInputs}>
@@ -79,9 +83,12 @@ export default function DeviceDefaultsPanel(props: { defaults: DeviceDefaults, d
         <PollPeriodAutoComplete pollPeriod={defaults.pollPeriod} onPollPeriodChange={onPollPeriodChange}/>
       </DefaultComponent>
     </Grid>
-    <Grid item container spacing={3} xs={12} className={classes.defaultsPanelInputs}>
-      <Grid item xs={9} sm={6} md={8} lg={6}>
+    <Grid item container spacing={3} className={classes.defaultsPanelInputs}>
+      <Grid item xs={9} sm={6} md={7} lg={5}>
         <DisplayTypeSelect displayType={defaults.displayType} onDisplayTypeSelected={onDisplayTypeSelected}/>
+      </Grid>
+      <Grid item xs={9} sm={6} md={5} lg={4}>
+        <HwVersionSelect hwVersion={defaults.hwVersion} onHwVersionSelected={onHwVersionSelected}/>
       </Grid>
     </Grid>
     <Grid item container spacing={2} xs={12} alignItems={'center'}>
@@ -151,6 +158,16 @@ function DisplayTypeSelect(props: { displayType: string, onDisplayTypeSelected: 
       <MenuItem value={'GOOD_DISPLAY_2_13IN'}>GoodDisplay 2.13"</MenuItem>
       <MenuItem value={'GOOD_DISPLAY_2_9IN'}>GoodDisplay 2.9"</MenuItem>
       <MenuItem value={'GOOD_DISPLAY_2_9IN_4GRAY'}>GoodDisplay 2.9" 4-gray</MenuItem>
+    </Select>
+  </FormControl>
+}
+
+function HwVersionSelect(props: { hwVersion: string, onHwVersionSelected: SelectInputProps['onChange'] }) {
+  return <FormControl fullWidth>
+    <InputLabel shrink={true} id="hw-version-label">Hw Version</InputLabel>
+    <Select labelId="hw-version-label" value={props.hwVersion} onChange={props.onHwVersionSelected}>
+      <MenuItem value={'E73'}>E73 boards</MenuItem>
+      <MenuItem value={'MS88SF2_V1_0'}>MS88SF2 v1.0</MenuItem>
     </Select>
   </FormControl>
 }

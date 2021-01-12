@@ -33,13 +33,13 @@ func TestRegistry_UpdateDefaults(t *testing.T) {
 
 	dev, _ := reg.Create("12345")
 
-	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", -4, 500, GOOD_DISPLAY_1_54IN})
+	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", -4, 500, GOOD_DISPLAY_1_54IN, E73})
 	dev, _ = reg.Get("12345")
 	assert.Equal(t, &Device{Defaults: expectedDefaults, Config: DefaultConfig}, dev)
 
 	_ = updateDefaults(t, reg, "12345", Defaults{})
 	dev, _ = reg.Get("12345")
-	assert.Equal(t, &Device{Defaults: Defaults{"", 0, 0, ""}, Config: DefaultConfig}, dev)
+	assert.Equal(t, &Device{Defaults: Defaults{"", 0, 0, "", ""}, Config: DefaultConfig}, dev)
 }
 
 func TestRegistry_UpdateConfig(t *testing.T) {
@@ -85,7 +85,7 @@ func TestRegistry_GetDevices(t *testing.T) {
 
 	_, err = reg.Create("12345")
 	assert.NoError(t, err)
-	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", -4, 5000, GOOD_DISPLAY_1_54IN})
+	expectedDefaults := updateDefaults(t, reg, "12345", Defaults{"D100", -4, 5000, GOOD_DISPLAY_1_54IN, E73})
 	expected["12345"] = Device{Defaults: expectedDefaults, Config: DefaultConfig}
 	assert.Equal(t, expected, getAll(t, reg))
 

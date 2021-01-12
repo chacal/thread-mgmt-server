@@ -22,10 +22,10 @@ var testState = device_registry.State{[]gonet.IP{ip}, 2970, "A100", 0, 1000,
 
 func TestGateway_PushSettings(t *testing.T) {
 	testWithCoapServer(t, func(t *testing.T, r *mux.Router, done chan int) {
-		expectJSONPost(t, r, "api/settings", `{"instance": "D100","txPower": -4,"pollPeriod": 5000, "displayType": "GOOD_DISPLAY_1_54IN"}`)
+		expectJSONPost(t, r, "api/settings", `{"instance": "D100","txPower": -4,"pollPeriod": 5000, "displayType": "GOOD_DISPLAY_1_54IN", "hwVersion": "E73"}`)
 
 		gw := Create()
-		dev := device_registry.Defaults{"D100", -4, 5000, device_registry.GOOD_DISPLAY_1_54IN}
+		dev := device_registry.Defaults{"D100", -4, 5000, device_registry.GOOD_DISPLAY_1_54IN, device_registry.E73}
 		err := gw.PushDefaults(dev, LOCAL_IP)
 		assert.NoError(t, err)
 		done <- 1

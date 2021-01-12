@@ -13,6 +13,7 @@ export interface DeviceDefaults {
   txPower: number
   pollPeriod: number
   displayType: string
+  hwVersion: string
 }
 
 interface ParentInfo {

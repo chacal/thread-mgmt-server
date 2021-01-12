@@ -35,7 +35,8 @@ func TestV1GetDevices(t *testing.T) {
 					"instance": "0000",
 					"txPower": 0,
 					"pollPeriod": 1000,
-                    "displayType": ""
+                    "displayType": "",
+					"hwVersion": ""
 				},
 				"config": {
 					"mainIp": "",
@@ -48,7 +49,7 @@ func TestV1GetDevices(t *testing.T) {
 	)
 
 	err = reg.UpdateDefaults("12345",
-		device_registry.Defaults{"D100", -4, 5000, device_registry.GOOD_DISPLAY_2_9IN_4GRAY},
+		device_registry.Defaults{"D100", -4, 5000, device_registry.GOOD_DISPLAY_2_9IN_4GRAY, device_registry.MS88SF2_V1_0},
 	)
 	require.NoError(t, err)
 
@@ -59,7 +60,8 @@ func TestV1GetDevices(t *testing.T) {
 					"instance": "D100",
 					"txPower": -4,
 					"pollPeriod": 5000,
-					"displayType": "GOOD_DISPLAY_2_9IN_4GRAY"
+					"displayType": "GOOD_DISPLAY_2_9IN_4GRAY",
+					"hwVersion": "MS88SF2_V1_0"
 				},
 				"config": {
 					"mainIp": "",
@@ -75,7 +77,7 @@ func TestV1GetDevices(t *testing.T) {
 	require.NoError(t, err)
 
 	err = reg.UpdateDefaults("ABCDE",
-		device_registry.Defaults{"D101", 0, 3000, device_registry.GOOD_DISPLAY_2_9IN},
+		device_registry.Defaults{"D101", 0, 3000, device_registry.GOOD_DISPLAY_2_9IN, device_registry.E73},
 	)
 	require.NoError(t, err)
 	err = reg.UpdateState("ABCDE", testState)
@@ -84,11 +86,11 @@ func TestV1GetDevices(t *testing.T) {
 	T.AssertOKJson(t,
 		`{
 			"12345": {
-				"defaults": { "instance": "D100", "txPower": -4, "pollPeriod": 5000, "displayType": "GOOD_DISPLAY_2_9IN_4GRAY" },
+				"defaults": { "instance": "D100", "txPower": -4, "pollPeriod": 5000, "displayType": "GOOD_DISPLAY_2_9IN_4GRAY", "hwVersion": "MS88SF2_V1_0" },
 				"config": { "mainIp": "", "statePollingEnabled": false, "statePollingIntervalSec": 600 }
 			},
 			"ABCDE": {
-				"defaults": { "instance": "D101", "txPower": 0, "pollPeriod": 3000, "displayType": "GOOD_DISPLAY_2_9IN" },
+				"defaults": { "instance": "D101", "txPower": 0, "pollPeriod": 3000, "displayType": "GOOD_DISPLAY_2_9IN", "hwVersion": "E73" },
 				"config": { "mainIp": "", "statePollingEnabled": false, "statePollingIntervalSec": 600 },
 				"state": {
 					"vcc": 2970,
@@ -121,13 +123,13 @@ func TestV1PostDefaults(t *testing.T) {
 	}{
 		"default": {
 			"ABCDE",
-			`{"instance": "D101", "txPower": 0, "pollPeriod": 1000, "displayType": ""}`,
-			device_registry.Defaults{"D101", 0, 1000, ""},
+			`{"instance": "D101", "txPower": 0, "pollPeriod": 1000, "displayType": "", "hwVersion": ""}`,
+			device_registry.Defaults{"D101", 0, 1000, "", ""},
 		},
 		"replaces previous defaults": {
 			"ABCDE",
-			`{"instance": "D102", "txPower": 4, "pollPeriod": 2000, "displayType": "GOOD_DISPLAY_1_54IN"}`,
-			device_registry.Defaults{"D102", 4, 2000, device_registry.GOOD_DISPLAY_1_54IN},
+			`{"instance": "D102", "txPower": 4, "pollPeriod": 2000, "displayType": "GOOD_DISPLAY_1_54IN", "hwVersion": "E73"}`,
+			device_registry.Defaults{"D102", 4, 2000, device_registry.GOOD_DISPLAY_1_54IN, device_registry.E73},
 		},
 	}
 

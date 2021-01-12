@@ -23,22 +23,22 @@ var testState = device_registry.State{[]net.IP{ip}, 2970, "A100", -4, 1000,
 
 func TestGetV1Defaults(t *testing.T) {
 	coapServerTest(t, func(t *testing.T, reg *device_registry.Registry, done chan int) {
-		assert.JSONEq(t, `{"instance":"0000", "txPower": 0, "pollPeriod":1000, "displayType": ""}`, getJSON(t, "/v1/defaults/ABCDE"))
+		assert.JSONEq(t, `{"instance":"0000", "txPower": 0, "pollPeriod":1000, "displayType": "", "hwVersion": ""}`, getJSON(t, "/v1/defaults/ABCDE"))
 
 		_, err := reg.Create("12345")
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"0000", "txPower": 0, "pollPeriod":1000, "displayType": ""}`, getJSON(t, "/v1/defaults/12345"))
+		assert.JSONEq(t, `{"instance":"0000", "txPower": 0, "pollPeriod":1000, "displayType": "", "hwVersion": ""}`, getJSON(t, "/v1/defaults/12345"))
 
 		_, err = reg.Create("AABCCEE")
 		assert.NoError(t, err)
 
-		err = reg.UpdateDefaults("AABCCEE", device_registry.Defaults{"D105", 0, 500, device_registry.GOOD_DISPLAY_1_54IN})
+		err = reg.UpdateDefaults("AABCCEE", device_registry.Defaults{"D105", 0, 500, device_registry.GOOD_DISPLAY_1_54IN, device_registry.E73})
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"D105", "txPower": 0, "pollPeriod":500, "displayType": "GOOD_DISPLAY_1_54IN"}`, getJSON(t, "/v1/defaults/AABCCEE"))
+		assert.JSONEq(t, `{"instance":"D105", "txPower": 0, "pollPeriod":500, "displayType": "GOOD_DISPLAY_1_54IN", "hwVersion": "E73"}`, getJSON(t, "/v1/defaults/AABCCEE"))
 
 		err = reg.UpdateState("AABCCEE", testState)
 		assert.NoError(t, err)
-		assert.JSONEq(t, `{"instance":"D105", "txPower": 0, "pollPeriod":500, "displayType": "GOOD_DISPLAY_1_54IN"}`, getJSON(t, "/v1/defaults/AABCCEE"))
+		assert.JSONEq(t, `{"instance":"D105", "txPower": 0, "pollPeriod":500, "displayType": "GOOD_DISPLAY_1_54IN", "hwVersion": "E73"}`, getJSON(t, "/v1/defaults/AABCCEE"))
 		done <- 1
 	})
 }
