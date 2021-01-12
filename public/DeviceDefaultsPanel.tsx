@@ -151,23 +151,35 @@ function PollPeriodAutoComplete(props: { pollPeriod: number, onPollPeriodChange:
 }
 
 function DisplayTypeSelect(props: { displayType: string, onDisplayTypeSelected: SelectInputProps['onChange'] }) {
-  return <FormControl fullWidth>
-    <InputLabel shrink={true} id="display-label">Display</InputLabel>
-    <Select labelId="display-label" value={props.displayType} onChange={props.onDisplayTypeSelected}>
-      <MenuItem value={'GOOD_DISPLAY_1_54IN'}>GoodDisplay 1.54"</MenuItem>
-      <MenuItem value={'GOOD_DISPLAY_2_13IN'}>GoodDisplay 2.13"</MenuItem>
-      <MenuItem value={'GOOD_DISPLAY_2_9IN'}>GoodDisplay 2.9"</MenuItem>
-      <MenuItem value={'GOOD_DISPLAY_2_9IN_4GRAY'}>GoodDisplay 2.9" 4-gray</MenuItem>
-    </Select>
-  </FormControl>
+  const items = new Map([
+    ['GOOD_DISPLAY_1_54IN', 'GoodDisplay 1.54"'],
+    ['GOOD_DISPLAY_2_13IN', 'GoodDisplay 2.13"'],
+    ['GOOD_DISPLAY_2_9IN', 'GoodDisplay 2.9"'],
+    ['GOOD_DISPLAY_2_9IN_4GRAY', 'GoodDisplay 2.9" 4-gray']
+  ])
+  return <DeviceDefaultsSelect selectedItem={props.displayType} label={'Display Type'}
+                               onItemSelected={props.onDisplayTypeSelected} items={items}
+  />
 }
 
 function HwVersionSelect(props: { hwVersion: string, onHwVersionSelected: SelectInputProps['onChange'] }) {
+  const items = new Map([
+    ['E73', 'E73 boards'],
+    ['MS88SF2_V1_0', 'MS88SF2 v1.0'],
+  ])
+
+  return <DeviceDefaultsSelect selectedItem={props.hwVersion} label={'Hw Version'}
+                               onItemSelected={props.onHwVersionSelected} items={items}
+  />
+}
+
+function DeviceDefaultsSelect(props: { selectedItem: string, label: string, items: Map<string, string>, onItemSelected: SelectInputProps['onChange'] }) {
   return <FormControl fullWidth>
-    <InputLabel shrink={true} id="hw-version-label">Hw Version</InputLabel>
-    <Select labelId="hw-version-label" value={props.hwVersion} onChange={props.onHwVersionSelected}>
-      <MenuItem value={'E73'}>E73 boards</MenuItem>
-      <MenuItem value={'MS88SF2_V1_0'}>MS88SF2 v1.0</MenuItem>
+    <InputLabel shrink={true}>{props.label}</InputLabel>
+    <Select value={props.selectedItem} onChange={props.onItemSelected}>
+      {
+        Array.from(props.items.keys()).map(k => <MenuItem value={k}>{props.items.get(k)}</MenuItem>)
+      }
     </Select>
   </FormControl>
 }
