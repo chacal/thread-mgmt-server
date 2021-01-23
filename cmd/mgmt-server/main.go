@@ -10,6 +10,8 @@ import (
 	"github.com/chacal/thread-mgmt-server/pkg/state_poller_service"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
+	"net/http"
+	_ "net/http/pprof"
 	"strconv"
 	"strings"
 	"time"
@@ -58,6 +60,10 @@ func main() {
 
 	// Start HTTP server
 	go startHttpServer(opts, reg, gw, sps, serverExit)
+
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	// Wait for servers to exit
 	<-serverExit
