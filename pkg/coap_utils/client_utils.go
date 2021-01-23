@@ -8,6 +8,7 @@ import (
 	"github.com/plgd-dev/go-coap/v2/udp"
 	"github.com/plgd-dev/go-coap/v2/udp/client"
 	"github.com/plgd-dev/go-coap/v2/udp/message/pool"
+	log "github.com/sirupsen/logrus"
 	"strings"
 	"time"
 )
@@ -58,8 +59,14 @@ func PostJSON(ctx context.Context, url string, path string, payload string) (str
 	}
 }
 
+func coapErrorHandler(err error) {
+	if err != context.Canceled {
+		log.Errorf("coap error: %v", err)
+	}
+}
+
 func executeRequest(url string, path string, reqCreator func() (*pool.Message, error)) (*pool.Message, error) {
-	conn, err := udp.Dial(url, udp.WithKeepAlive(nil), udp.WithTransmission(time.Second, RequestAckTimeout, 5))
+	conn, err := udp.Dial(url, udp.WithKeepAlive(nil), udp.WithTransmission(time.Second, RequestAckTimeout, 5), udp.WithErrors(coapErrorHandler))
 	if err != nil {
 		return nil, errors.Wrapf(err, "couldn't dial to url %v", url)
 	}
