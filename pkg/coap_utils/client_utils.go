@@ -70,6 +70,8 @@ func executeRequest(url string, path string, reqCreator func() (*pool.Message, e
 	}
 	req.SetAccept(message.AppJSON)
 
+	defer pool.ReleaseMessage(req)
+	defer conn.Close()
 	resp, err := conn.Do(req)
 	if err != nil {
 		return nil, errors.WithStack(err)
