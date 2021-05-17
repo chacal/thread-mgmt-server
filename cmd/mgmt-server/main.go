@@ -118,5 +118,9 @@ func logOptions(opts Options) {
 }
 
 func obfuscate(s string) string {
-	return s[:2] + strings.Repeat("*", len(s)-2)
+	if len(s) > 4 {
+		return s[:2] + strings.Repeat("*", len(s)-2)
+	} else {
+		return strings.Repeat("*", len(s))
+	}
 }
